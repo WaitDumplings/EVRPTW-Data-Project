@@ -1,0 +1,674 @@
+{
+  "schema": "evrptw_frozen_customer_sources_v3",
+  "policy": "identified_residential_site_v3",
+  "source_vintages": {
+    "microsoft_global_release": "2026-08-13",
+    "microsoft_global_imagery_year": "not supplied for these source features",
+    "microsoft_legacy": "frozen gap-fill source; mixed imagery years, original acquisition date unrecorded",
+    "nsi_api_snapshot": "2026-10-26",
+    "nsi_underlying_attributes": "mixed source vintages; release year is not observation year",
+    "osm_context_replication_timestamp": "2026-10-25T21:21:21Z"
+  },
+  "cities": {
+    "new-york": {
+      "area_crs": "EPSG:32618",
+      "label": "New York City",
+      "boundary_sha256": "3d7376588d85a1a86c4152ada0f893a2598128abb22b2b5d4a9f25ce9d823c70",
+      "sources": {
+        "nsi_crosswalk": {
+          "path": "data/derived/new-york/nsi_crosswalk.parquet",
+          "sha256": "05bab09d0d78e8d98cc7655c419a120ae155ae4fd7a4d3e097fa213bb351d512",
+          "record_count": 727990,
+          "private_build_input": false
+        },
+        "microsoft_footprints": {
+          "path": "data/derived/new-york/microsoft_footprints.parquet",
+          "sha256": "09434358e0df5a8865da9246a912b62a8cbb05c1702ba50e01b637b3110b9efb",
+          "record_count": 505609,
+          "private_build_input": false
+        },
+        "osm_buildings": {
+          "path": "data/derived/new-york/osm_buildings.parquet",
+          "sha256": "46e64eaf8ca09c7b2e34db6f8718c5b46ddb10e3a0029d0a190fdb38231f2321",
+          "record_count": 1083263,
+          "private_build_input": false
+        },
+        "osm_complexes": {
+          "path": "data/derived/new-york/osm_complexes.parquet",
+          "sha256": "85dff7b51a5f960ab854e5347bb69ef9827f89d937e3e279200a57fc21dd3e56",
+          "record_count": 201,
+          "private_build_input": false
+        },
+        "public_masks": {
+          "path": "data/private/new-york/public_masks.parquet",
+          "sha256": "1bfa4f49d0b0f93b4ddc2a6b61a54c3f31f46ea2097866c259ca14122c239aff",
+          "record_count": 1761,
+          "private_build_input": true
+        }
+      },
+      "provenance": {
+        "microsoft_composite": {
+          "path": "data/provenance/new-york/microsoft_composite.json",
+          "sha256": "bb6b1c772d46447fa3ef6099ae3eb9c7f8f788702029f889ef5880e01499a4f4"
+        },
+        "nsi_parse": {
+          "path": "data/provenance/new-york/nsi_parse.json",
+          "sha256": "2ca6e29b188bec508ed72e0019b795434ba67beee266eebb72025a2adb462562"
+        },
+        "nsi_matching": {
+          "path": "data/provenance/new-york/nsi_matching.json",
+          "sha256": "12f8a5914252388e352e8b601782059a06d008fd8804f48a7e12ce162014e84e"
+        },
+        "public_masks": {
+          "path": "data/provenance/new-york/public_masks.json",
+          "sha256": "1dbb10890b556d2037dce86c64684459107947eed0540736bda2f92a175a4ec5"
+        },
+        "osm_complexes": {
+          "path": "data/provenance/new-york/osm_complexes.json",
+          "sha256": "3bff156c1fbafe6e5c24fb31f5b491bc9133c7352e989491615e63ddf113566e"
+        }
+      },
+      "hydration_status": "frozen inputs required; not distributed in code repository"
+    },
+    "los-angeles": {
+      "area_crs": "EPSG:32611",
+      "label": "Los Angeles",
+      "boundary_sha256": "f4987a537e95bfbc71df5fe8fcc124209f55fce2034da5039f8d55a84c8a51bd",
+      "sources": {
+        "nsi_crosswalk": {
+          "path": "data/derived/los-angeles/nsi_crosswalk.parquet",
+          "sha256": "df98ab25f5e0f52ceec85fc27e1a4eeb5d345f515f596818e985c5c881e03777",
+          "record_count": 655504,
+          "private_build_input": false
+        },
+        "microsoft_footprints": {
+          "path": "data/derived/los-angeles/microsoft_footprints.parquet",
+          "sha256": "25302ff3ffe2c3b228703f3a2acb726c0bfd1fdcfc9d166fdb0c52a1938e45e4",
+          "record_count": 850512,
+          "private_build_input": false
+        },
+        "osm_buildings": {
+          "path": "data/derived/los-angeles/osm_buildings.parquet",
+          "sha256": "9c5639d3e74c355615b6072feace96d58df3df23d859e0aea970a45848c2eb77",
+          "record_count": 1075906,
+          "private_build_input": false
+        },
+        "osm_complexes": {
+          "path": "data/derived/los-angeles/osm_complexes.parquet",
+          "sha256": "ac45e9862f45999124a61e2d9da4b487a656ebfb040f344b0f5163ebe03f0388",
+          "record_count": 724,
+          "private_build_input": false
+        },
+        "public_masks": {
+          "path": "data/private/los-angeles/public_masks.parquet",
+          "sha256": "6fe369c64adbdbe785285e5ec5e9342dfa52327b99065c22be563c200265ac0b",
+          "record_count": 1163,
+          "private_build_input": true
+        }
+      },
+      "provenance": {
+        "microsoft_composite": {
+          "path": "data/provenance/los-angeles/microsoft_composite.json",
+          "sha256": "2c126a27015a70ecbb56c636ecd31e372ef549adc13f1340294ecebf094c1fc5"
+        },
+        "nsi_parse": {
+          "path": "data/provenance/los-angeles/nsi_parse.json",
+          "sha256": "4df354030379c99c84dab1f98b42cd66c575898dfdfc561f9f673859c12a9638"
+        },
+        "nsi_matching": {
+          "path": "data/provenance/los-angeles/nsi_matching.json",
+          "sha256": "205ad583c078696c0a0aa877f015c00d9c822f98d5cf8a63baeb134fa6e7665a"
+        },
+        "public_masks": {
+          "path": "data/provenance/los-angeles/public_masks.json",
+          "sha256": "d8a4647e8c88d989320848da1a6ae7d321f2327ce6f23116b97ce05f0361ae3a"
+        },
+        "osm_complexes": {
+          "path": "data/provenance/los-angeles/osm_complexes.json",
+          "sha256": "35377ef966209331f2f32470a43979c9d607fdbffde83f83927267793f42ac34"
+        }
+      },
+      "hydration_status": "frozen inputs required; not distributed in code repository"
+    },
+    "chicago": {
+      "area_crs": "EPSG:32616",
+      "label": "Chicago",
+      "boundary_sha256": "4d4dd1d98e56f250edb31c21927b9679cde9da1ff9859b2775c0019bd0b580db",
+      "sources": {
+        "nsi_crosswalk": {
+          "path": "data/derived/chicago/nsi_crosswalk.parquet",
+          "sha256": "961d8a2191bb0516818103e3df8efa3c8c3959b1c3dddeb98a9aaf40082d804a",
+          "record_count": 483425,
+          "private_build_input": false
+        },
+        "microsoft_footprints": {
+          "path": "data/derived/chicago/microsoft_footprints.parquet",
+          "sha256": "ec8d856bf954799ccfa24dd0a9ebd1f142efa44e15c2f54c52ad4074e9f4f5ec",
+          "record_count": 680078,
+          "private_build_input": false
+        },
+        "osm_buildings": {
+          "path": "data/derived/chicago/osm_buildings.parquet",
+          "sha256": "5d5874772076ef443b936aba3a661138f1a230d8213fd95b503b05d33f2dd422",
+          "record_count": 822771,
+          "private_build_input": false
+        },
+        "osm_complexes": {
+          "path": "data/derived/chicago/osm_complexes.parquet",
+          "sha256": "78e089b9c421e72a9c423e8ea936413bde97ae01ea574784d7f732889f0a2ef8",
+          "record_count": 114,
+          "private_build_input": false
+        },
+        "public_masks": {
+          "path": "data/private/chicago/public_masks.parquet",
+          "sha256": "0851f5cfe7ddfc5a5206fe3605cd7ea5cf20a73d3af20d26d81fb0d9f467f77f",
+          "record_count": 1419,
+          "private_build_input": true
+        }
+      },
+      "provenance": {
+        "microsoft_composite": {
+          "path": "data/provenance/chicago/microsoft_composite.json",
+          "sha256": "3c6009528ec564c682f2c1345ffb810b28638a521ce8f9ba911dc74fe7ff8fb2"
+        },
+        "nsi_parse": {
+          "path": "data/provenance/chicago/nsi_parse.json",
+          "sha256": "245df71c48727ba1eb9872695a3b2a2155c95f6814879bbc892bd66d7bf290b8"
+        },
+        "nsi_matching": {
+          "path": "data/provenance/chicago/nsi_matching.json",
+          "sha256": "858e1f3e6a3e107a6480b8eb52ffdef8b984b1b1bcd9e097d2d6d31f2287fdb5"
+        },
+        "public_masks": {
+          "path": "data/provenance/chicago/public_masks.json",
+          "sha256": "04a51af77ff80648551a11459ba4136bab16461af2aa042ec6481084753e52c9"
+        },
+        "osm_complexes": {
+          "path": "data/provenance/chicago/osm_complexes.json",
+          "sha256": "9109440441c90aa15eef753f5200d0067528b5e60baa992f45ff2d41ce6ee20f"
+        }
+      },
+      "hydration_status": "frozen inputs required; not distributed in code repository"
+    },
+    "houston": {
+      "area_crs": "EPSG:32615",
+      "label": "Houston",
+      "boundary_sha256": "799bdab1545d881940375e3be1e768f455585f6a3479e9569cc1b1eba1954ab7",
+      "sources": {
+        "nsi_crosswalk": {
+          "path": "data/derived/houston/nsi_crosswalk.parquet",
+          "sha256": "01255f22263655eb239c758c60fce1573ef5b643249bd235d1d37ac11e8edb7d",
+          "record_count": 524078,
+          "private_build_input": false
+        },
+        "microsoft_footprints": {
+          "path": "data/derived/houston/microsoft_footprints.parquet",
+          "sha256": "e2e3bd96445c86ff3216dbc1f7d21526ab7109eb3e3305f895a219caf4c88500",
+          "record_count": 609852,
+          "private_build_input": false
+        },
+        "osm_buildings": {
+          "path": "data/derived/houston/osm_buildings.parquet",
+          "sha256": "7c71a661a0fb91f446f5b459d8e4308313e2f99fe1592aded3db6051b6f62ecf",
+          "record_count": 465402,
+          "private_build_input": false
+        },
+        "osm_complexes": {
+          "path": "data/derived/houston/osm_complexes.parquet",
+          "sha256": "280633dac961ec4e01edfa660840c7dbde10a665de80b7ddb367569297cec92e",
+          "record_count": 1178,
+          "private_build_input": false
+        },
+        "public_masks": {
+          "path": "data/private/houston/public_masks.parquet",
+          "sha256": "2dce3795a4ec06db509180ef3ab930532b46749fcb71db6c3d9e2ff84e54da95",
+          "record_count": 696,
+          "private_build_input": true
+        }
+      },
+      "provenance": {
+        "microsoft_composite": {
+          "path": "data/provenance/houston/microsoft_composite.json",
+          "sha256": "2f245540403c378a190f18f9fb55b3ec569ac64b8639c3ddb8efe6e7d75ef1aa"
+        },
+        "nsi_parse": {
+          "path": "data/provenance/houston/nsi_parse.json",
+          "sha256": "eed595cd2907f491c7a68af73e852f96bec35496db34850b9ec507c6f4260c62"
+        },
+        "nsi_matching": {
+          "path": "data/provenance/houston/nsi_matching.json",
+          "sha256": "ed892d6ed345c2e2e932c062213d793bc6be15b0ed595a09fa48f6a1e9d62d6c"
+        },
+        "public_masks": {
+          "path": "data/provenance/houston/public_masks.json",
+          "sha256": "34225b1b86f0bcc9c7309e15b29e531a23bbac09d48708a08e3417db6785a990"
+        },
+        "osm_complexes": {
+          "path": "data/provenance/houston/osm_complexes.json",
+          "sha256": "6587d6cb7c52a738b8510ad0cbeeb13e20dc600e3f798e023a0987932ec9bfcd"
+        }
+      },
+      "hydration_status": "frozen inputs required; not distributed in code repository"
+    },
+    "phoenix": {
+      "area_crs": "EPSG:32612",
+      "label": "Phoenix",
+      "boundary_sha256": "9af771cf3944e7a3c0eb826796f7f9af665ed6967ba88092c22a886086473e6b",
+      "sources": {
+        "nsi_crosswalk": {
+          "path": "data/derived/phoenix/nsi_crosswalk.parquet",
+          "sha256": "4a5861ac155beb280f443eac1663cf0d36ededbfd4d30abe9664c1a26165a142",
+          "record_count": 477277,
+          "private_build_input": false
+        },
+        "microsoft_footprints": {
+          "path": "data/derived/phoenix/microsoft_footprints.parquet",
+          "sha256": "a037613d1a4312785c8bf50f2dc058dea3ca78d1b732aafdf9d0b5b1c22c6c78",
+          "record_count": 511479,
+          "private_build_input": false
+        },
+        "osm_buildings": {
+          "path": "data/derived/phoenix/osm_buildings.parquet",
+          "sha256": "9269f933df3fd3fc84abaf24d903fa34e7ec532195ac7703e217d826cd67e991",
+          "record_count": 495020,
+          "private_build_input": false
+        },
+        "osm_complexes": {
+          "path": "data/derived/phoenix/osm_complexes.parquet",
+          "sha256": "e78c8a7365f26b726c5477aa6b7c41c0adf4511ac154cba97dab5cbd1081508d",
+          "record_count": 881,
+          "private_build_input": false
+        },
+        "public_masks": {
+          "path": "data/private/phoenix/public_masks.parquet",
+          "sha256": "9260831ca54e013e06d01f5caa4995c9227902683b94473b8c89c2b847c4d6a5",
+          "record_count": 292,
+          "private_build_input": true
+        }
+      },
+      "provenance": {
+        "microsoft_composite": {
+          "path": "data/provenance/phoenix/microsoft_composite.json",
+          "sha256": "8d3364671d2e8dea99efba6bd50de0eeb1d8fbec74db6d1df7b29147384f7695"
+        },
+        "nsi_parse": {
+          "path": "data/provenance/phoenix/nsi_parse.json",
+          "sha256": "be40cc9ec976809f8987c69c1031463f9a8b38a022434c480d107b5e73d49143"
+        },
+        "nsi_matching": {
+          "path": "data/provenance/phoenix/nsi_matching.json",
+          "sha256": "3c7d90daa51ec22f50c6671f2a21892bd8b46817d87abe17e1e88eb349160114"
+        },
+        "public_masks": {
+          "path": "data/provenance/phoenix/public_masks.json",
+          "sha256": "f4d7781d00026d563ea137f9c4bf447b1cd774bfac95890f5c72185bfd91cfae"
+        },
+        "osm_complexes": {
+          "path": "data/provenance/phoenix/osm_complexes.json",
+          "sha256": "e9662c99bd7adac11182668017f782bfe9182793dc2e595e4d789fda182e4227"
+        }
+      },
+      "hydration_status": "frozen inputs required; not distributed in code repository"
+    },
+    "philadelphia": {
+      "area_crs": "EPSG:32618",
+      "label": "Philadelphia",
+      "boundary_sha256": "52069420fa248fec4f471770db9276e5cf6da77db366d3ff9d718e5646c23a94",
+      "sources": {
+        "nsi_crosswalk": {
+          "path": "data/derived/philadelphia/nsi_crosswalk.parquet",
+          "sha256": "4cc25912450d4ac3a9c71ff950555f1e3d8af620c7c373fcf23df6cc2e5c344d",
+          "record_count": 470695,
+          "private_build_input": false
+        },
+        "microsoft_footprints": {
+          "path": "data/derived/philadelphia/microsoft_footprints.parquet",
+          "sha256": "cde5836649bf2e378892942a867e2f162e5f172b96f1fa5b54e3962b92ebd7eb",
+          "record_count": 161182,
+          "private_build_input": false
+        },
+        "osm_buildings": {
+          "path": "data/derived/philadelphia/osm_buildings.parquet",
+          "sha256": "f89717701e78258960689e05159517197f1f3d0df14da030c3e9787a0faab2f3",
+          "record_count": 545001,
+          "private_build_input": false
+        },
+        "osm_complexes": {
+          "path": "data/derived/philadelphia/osm_complexes.parquet",
+          "sha256": "204ac0ce2cf2ec6f06d24a6295d6dfe17ba81c706ea981e1825e43e45b5a1615",
+          "record_count": 33,
+          "private_build_input": false
+        },
+        "public_masks": {
+          "path": "data/private/philadelphia/public_masks.parquet",
+          "sha256": "316e313e0aa9b75b39f0a7b625bdad3aa56f4f7ae9400ad177700ec1a1ad4b5a",
+          "record_count": 275,
+          "private_build_input": true
+        }
+      },
+      "provenance": {
+        "microsoft_composite": {
+          "path": "data/provenance/philadelphia/microsoft_composite.json",
+          "sha256": "5b6080feef1c92b0298507318e852159b3636f23b93c34e1dadaf50899f49d93"
+        },
+        "nsi_parse": {
+          "path": "data/provenance/philadelphia/nsi_parse.json",
+          "sha256": "7f464a996edbfb196675b6d5c26dd23cc5bf75a828584c5627e3f0aea4107b88"
+        },
+        "nsi_matching": {
+          "path": "data/provenance/philadelphia/nsi_matching.json",
+          "sha256": "409180e96ceb6980149d1811919bbc2a9c38a2d4280eb2af590f5d8db8debfef"
+        },
+        "public_masks": {
+          "path": "data/provenance/philadelphia/public_masks.json",
+          "sha256": "ee3aab165677d5ec4bdbda6761c3c8896bb9de486861e16e5c2b61efc599e2ff"
+        },
+        "osm_complexes": {
+          "path": "data/provenance/philadelphia/osm_complexes.json",
+          "sha256": "1e1b548ce0d1ff08c83db6c13f9cd461e86be2f6a395e5257d8a725bbb21edf9"
+        }
+      },
+      "hydration_status": "frozen inputs required; not distributed in code repository"
+    },
+    "san-antonio": {
+      "area_crs": "EPSG:32614",
+      "label": "San Antonio",
+      "boundary_sha256": "415509f301f5cd7049fb27d076f76217033eaec05efea30a7afc626ffc75aac1",
+      "sources": {
+        "nsi_crosswalk": {
+          "path": "data/derived/san-antonio/nsi_crosswalk.parquet",
+          "sha256": "983c4f8fc5a070eeb9a0785dbf5351e20508f6bcbdad6b7bd69d2ddaeb44724a",
+          "record_count": 401243,
+          "private_build_input": false
+        },
+        "microsoft_footprints": {
+          "path": "data/derived/san-antonio/microsoft_footprints.parquet",
+          "sha256": "c72756bb82ffca4bef35e9cf6f3fe9f1f46b6a5c561b071ecf2227023747865a",
+          "record_count": 482993,
+          "private_build_input": false
+        },
+        "osm_buildings": {
+          "path": "data/derived/san-antonio/osm_buildings.parquet",
+          "sha256": "35023fda40db49d04c34e46c6c74ff307f3af91c4733ea4ff71ae6a2dd6fde6a",
+          "record_count": 227325,
+          "private_build_input": false
+        },
+        "osm_complexes": {
+          "path": "data/derived/san-antonio/osm_complexes.parquet",
+          "sha256": "aafd5b185dfd9e532e06a266d94ed155255daba7b3fce33b3ecdc3eec1dea9ef",
+          "record_count": 620,
+          "private_build_input": false
+        },
+        "public_masks": {
+          "path": "data/private/san-antonio/public_masks.parquet",
+          "sha256": "023b0b8084d2ad61b14a9ee3a0f84191e33bd7ff4aa37a27ca43d71d9f4d94c1",
+          "record_count": 535,
+          "private_build_input": true
+        }
+      },
+      "provenance": {
+        "microsoft_composite": {
+          "path": "data/provenance/san-antonio/microsoft_composite.json",
+          "sha256": "c5b3c933c69aa4cfba295b62daf2cf3e1b40216ebfeed81555b7bac1d22af426"
+        },
+        "nsi_parse": {
+          "path": "data/provenance/san-antonio/nsi_parse.json",
+          "sha256": "37013d11811bdeab0c4af322e89bd330dffba84267c864017f4aa1627740f44f"
+        },
+        "nsi_matching": {
+          "path": "data/provenance/san-antonio/nsi_matching.json",
+          "sha256": "2411e389971e9b49382bc422ef4b922e72facae4bfad936f565fc6135fe785f7"
+        },
+        "public_masks": {
+          "path": "data/provenance/san-antonio/public_masks.json",
+          "sha256": "32ffb92970d046bc2eb7beb0f6487b966392c90a898672fc7509cfb8df5d0e7e"
+        },
+        "osm_complexes": {
+          "path": "data/provenance/san-antonio/osm_complexes.json",
+          "sha256": "f37ff96e70f748cd07a667ba867948215106952ee85b380a6bd414a9d55620f5"
+        }
+      },
+      "hydration_status": "frozen inputs required; not distributed in code repository"
+    },
+    "san-diego": {
+      "area_crs": "EPSG:32611",
+      "label": "San Diego",
+      "boundary_sha256": "e54f5ad49ad658ae63ccdf49a024103e00fc4d0a49119e8021764b2403859370",
+      "sources": {
+        "nsi_crosswalk": {
+          "path": "data/derived/san-diego/nsi_crosswalk.parquet",
+          "sha256": "d0b489db6acc705a964aa863255471009e74dd23e9815da63c776b34e8c4e96e",
+          "record_count": 283722,
+          "private_build_input": false
+        },
+        "microsoft_footprints": {
+          "path": "data/derived/san-diego/microsoft_footprints.parquet",
+          "sha256": "daeb3cbc2dc294f9b7c998564f5305e9d3c7345804546adbfb94aa1f93fd8f06",
+          "record_count": 335501,
+          "private_build_input": false
+        },
+        "osm_buildings": {
+          "path": "data/derived/san-diego/osm_buildings.parquet",
+          "sha256": "19e448777fd2b7cf1d543f74cefe6fb5a997e906a23eb5061755c614c1cceb1f",
+          "record_count": 231918,
+          "private_build_input": false
+        },
+        "osm_complexes": {
+          "path": "data/derived/san-diego/osm_complexes.parquet",
+          "sha256": "bbec69e2ea73534c441f21a6d711dab22e2fefc803ba74940efb438138f753cc",
+          "record_count": 142,
+          "private_build_input": false
+        },
+        "public_masks": {
+          "path": "data/private/san-diego/public_masks.parquet",
+          "sha256": "2f524247f15f3bc73a6db386a7983486e090c9916aebb2db3529a663a6c60dab",
+          "record_count": 1285,
+          "private_build_input": true
+        }
+      },
+      "provenance": {
+        "microsoft_composite": {
+          "path": "data/provenance/san-diego/microsoft_composite.json",
+          "sha256": "6b233bb0ac982ace12e131792e26593e5da5660977c94ac217d213ce5f938498"
+        },
+        "nsi_parse": {
+          "path": "data/provenance/san-diego/nsi_parse.json",
+          "sha256": "32e9e76fb86ddb37271dd876ef344a0e8f4d5182455e7c080938b9e6f40592a9"
+        },
+        "nsi_matching": {
+          "path": "data/provenance/san-diego/nsi_matching.json",
+          "sha256": "50202b0c7db084a6c23372a94c22554196c9a36d607fa1eb31d6e60faa57fe47"
+        },
+        "public_masks": {
+          "path": "data/provenance/san-diego/public_masks.json",
+          "sha256": "16bb040a06a70e37d2eee784261197d15f73df63317c4b9be4d7cc3ea22db508"
+        },
+        "osm_complexes": {
+          "path": "data/provenance/san-diego/osm_complexes.json",
+          "sha256": "31006f99ee62d8a4f86645c7d05bf5f24da6da2561a859973c8d76383e9e8408"
+        }
+      },
+      "hydration_status": "frozen inputs required; not distributed in code repository"
+    },
+    "dallas": {
+      "area_crs": "EPSG:32614",
+      "label": "Dallas",
+      "boundary_sha256": "bb214372f55909942616762b0240e0a3286ee32c0770f9e9fdde4cd5188f90ac",
+      "sources": {
+        "nsi_crosswalk": {
+          "path": "data/derived/dallas/nsi_crosswalk.parquet",
+          "sha256": "e59a1cf025cd7226e33616c3a85dfa2ac74b56a39fd2541788e214588af94e5e",
+          "record_count": 279896,
+          "private_build_input": false
+        },
+        "microsoft_footprints": {
+          "path": "data/derived/dallas/microsoft_footprints.parquet",
+          "sha256": "69da1fde9b5945f6aec70a626b6d8ce2caa692436b5667436425689bd60f1917",
+          "record_count": 328823,
+          "private_build_input": false
+        },
+        "osm_buildings": {
+          "path": "data/derived/dallas/osm_buildings.parquet",
+          "sha256": "12ee9c6e25768075ab47630a36a5e80a120fa649f7e2992abf426482cfa3131e",
+          "record_count": 297829,
+          "private_build_input": false
+        },
+        "osm_complexes": {
+          "path": "data/derived/dallas/osm_complexes.parquet",
+          "sha256": "f5f360c9998d08837d7ab01c8e75157002a22a8d8c13d3efbd9c693aaf6c4c0f",
+          "record_count": 433,
+          "private_build_input": false
+        },
+        "public_masks": {
+          "path": "data/private/dallas/public_masks.parquet",
+          "sha256": "03b9b9bb6616684939346bd48d4775e59e0de7b2477c255d8dbcaf86a1ec9fe9",
+          "record_count": 373,
+          "private_build_input": true
+        }
+      },
+      "provenance": {
+        "microsoft_composite": {
+          "path": "data/provenance/dallas/microsoft_composite.json",
+          "sha256": "b7e3e2ae14665748b040a73f414ea42b51ebe21fe82311bb20589dafde012f13"
+        },
+        "nsi_parse": {
+          "path": "data/provenance/dallas/nsi_parse.json",
+          "sha256": "535b5eff373368efd226dd2db5db0ed7aebe3cdb27c9d7601437af4ed5308289"
+        },
+        "nsi_matching": {
+          "path": "data/provenance/dallas/nsi_matching.json",
+          "sha256": "82ab5aa82aaa94f9c874491732ce264c6e9201a25ea9d8c40df1ae9fa696997c"
+        },
+        "public_masks": {
+          "path": "data/provenance/dallas/public_masks.json",
+          "sha256": "edaf6b96a0c10ab74314dc97fe022e417efaace1326ef8814d13148f244dc9c6"
+        },
+        "osm_complexes": {
+          "path": "data/provenance/dallas/osm_complexes.json",
+          "sha256": "110495698a10399d24acdbf5dc5efccd88f7d19f14cd58fde0b277f775f6dc4d"
+        }
+      },
+      "hydration_status": "frozen inputs required; not distributed in code repository"
+    },
+    "fort-worth": {
+      "area_crs": "EPSG:32614",
+      "label": "Fort Worth",
+      "boundary_sha256": "70302f022420046995e4c99a3b1959663fa25c3610972fda56b0ba42044fc2ad",
+      "sources": {
+        "nsi_crosswalk": {
+          "path": "data/derived/fort-worth/nsi_crosswalk.parquet",
+          "sha256": "9fcc5634166f799ad4d3bf5d6798502590c0a2eb64dae0a916d9dba58f368937",
+          "record_count": 266688,
+          "private_build_input": false
+        },
+        "microsoft_footprints": {
+          "path": "data/derived/fort-worth/microsoft_footprints.parquet",
+          "sha256": "16f075d2c0dbea1f3542670b99c581fab4dab2e8fa146e261d49753d7774106f",
+          "record_count": 306295,
+          "private_build_input": false
+        },
+        "osm_buildings": {
+          "path": "data/derived/fort-worth/osm_buildings.parquet",
+          "sha256": "0d41f6790df1ab77aac8867dd4ba1bfe9245a02d0243693d1538cb94d91e3fcf",
+          "record_count": 298158,
+          "private_build_input": false
+        },
+        "osm_complexes": {
+          "path": "data/derived/fort-worth/osm_complexes.parquet",
+          "sha256": "29748e9ac705c3dd292dc258b18d74de56c5d42ec59e4fb654231cc1c510a91d",
+          "record_count": 163,
+          "private_build_input": false
+        },
+        "public_masks": {
+          "path": "data/private/fort-worth/public_masks.parquet",
+          "sha256": "51b9b1240ef44a07309f146eb13926a266cb197d51f06146529e69cb2887d1e9",
+          "record_count": 162,
+          "private_build_input": true
+        }
+      },
+      "provenance": {
+        "microsoft_composite": {
+          "path": "data/provenance/fort-worth/microsoft_composite.json",
+          "sha256": "4a248470ba0662ce21fa69e748d3200e324bd2d6b9294408a672512d3a05471d"
+        },
+        "nsi_parse": {
+          "path": "data/provenance/fort-worth/nsi_parse.json",
+          "sha256": "647cb67fa524b069216b173ca6ef509a4a7ae155d7859b2c47783f73bdf2fb1c"
+        },
+        "nsi_matching": {
+          "path": "data/provenance/fort-worth/nsi_matching.json",
+          "sha256": "2ff957f0dfe66d57573f66fdecde582e48e7b591ff7cce321489c7392010ab03"
+        },
+        "public_masks": {
+          "path": "data/provenance/fort-worth/public_masks.json",
+          "sha256": "9c3098cf00504b60d57da3a89cb1e5c574c4986d1aa57261fd92b33690781aaa"
+        },
+        "osm_complexes": {
+          "path": "data/provenance/fort-worth/osm_complexes.json",
+          "sha256": "3e68c9d0eed68c70acad44fa148bbb17dd2e067e8440fca8b68ce227f45044da"
+        }
+      },
+      "hydration_status": "frozen inputs required; not distributed in code repository"
+    },
+    "jacksonville": {
+      "area_crs": "EPSG:32617",
+      "label": "Jacksonville",
+      "boundary_sha256": "c2326b96a9939b6b950f00f6521ef347ab5332638f46f6065455fbebef288cfe",
+      "sources": {
+        "nsi_crosswalk": {
+          "path": "data/derived/jacksonville/nsi_crosswalk.parquet",
+          "sha256": "1b0daa052dadc0edef8a9c79e666a4e527dffc3f46cdbfc726abf7168db4e6cd",
+          "record_count": 330137,
+          "private_build_input": false
+        },
+        "microsoft_footprints": {
+          "path": "data/derived/jacksonville/microsoft_footprints.parquet",
+          "sha256": "168a138f743ef8beda27ce816394c7b4a65eecaa0890ad29f74fd2df645ceedc",
+          "record_count": 331678,
+          "private_build_input": false
+        },
+        "osm_buildings": {
+          "path": "data/derived/jacksonville/osm_buildings.parquet",
+          "sha256": "ae0cc9c5a7f0e6bed15a90380728bea48c2d92a435bc19a9b8687ca8de4bb1fe",
+          "record_count": 185702,
+          "private_build_input": false
+        },
+        "osm_complexes": {
+          "path": "data/derived/jacksonville/osm_complexes.parquet",
+          "sha256": "9401588a2dfa4d5e910161220a879404d1efb691f0b0c7c24ac242e65348b0d5",
+          "record_count": 340,
+          "private_build_input": false
+        },
+        "public_masks": {
+          "path": "data/private/jacksonville/public_masks.parquet",
+          "sha256": "548505ffcefc842dee03d13dea139f9d277f4604ff771caa92c1ba2c4906c2e9",
+          "record_count": 146,
+          "private_build_input": true
+        }
+      },
+      "provenance": {
+        "microsoft_composite": {
+          "path": "data/provenance/jacksonville/microsoft_composite.json",
+          "sha256": "a2089587c13fc4d959de0a088527dcb440060020e7f1a20d1102d326d6b796e9"
+        },
+        "nsi_parse": {
+          "path": "data/provenance/jacksonville/nsi_parse.json",
+          "sha256": "f89325ca5f59fe6de68b9bddbec0b077c6d814c8babd3b3faf89cc0f307b2b8e"
+        },
+        "nsi_matching": {
+          "path": "data/provenance/jacksonville/nsi_matching.json",
+          "sha256": "9104c24b2477e16131c596e996ade40b4f4fc6774322116cb2418042b19ad199"
+        },
+        "public_masks": {
+          "path": "data/provenance/jacksonville/public_masks.json",
+          "sha256": "78d3f696ee6b8222853b7036490a6dfe5990e0d08348bb8448c700693cc7c083"
+        },
+        "osm_complexes": {
+          "path": "data/provenance/jacksonville/osm_complexes.json",
+          "sha256": "4fcfb713e5ae468d7a2f569572f68c3ab9f46ad4429f067dbbdc6f140c277dff"
+        }
+      },
+      "hydration_status": "frozen inputs required; not distributed in code repository"
+    }
+  }
+}

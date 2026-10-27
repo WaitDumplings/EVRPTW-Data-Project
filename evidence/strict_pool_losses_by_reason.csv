@@ -1,0 +1,12 @@
+city,reason,count
+new-york,local_road_node_access_restricted,32
+los-angeles,local_road_no_verified_directed_roundtrip,1
+los-angeles,local_road_node_access_restricted,108
+chicago,local_road_node_access_restricted,1
+houston,local_road_node_access_restricted,7
+phoenix,local_road_node_access_restricted,28
+philadelphia,local_road_node_access_restricted,6
+san-antonio,local_road_node_access_restricted,20
+san-diego,local_road_node_access_restricted,20
+dallas,local_road_node_access_restricted,2
+jacksonville,local_road_node_access_restricted,44

@@ -1,0 +1,12 @@
+city,prototype_customer,production_customer,production_extra_customer,prototype_customer_not_reproduced,extra_customer_local_alternative,prototype_depot_groups,production_depot_groups,production_extra_depot_groups,prototype_depot_groups_not_reproduced
+new-york,586002,586844,888,46,888,130,132,2,0
+los-angeles,591266,593978,2825,113,2825,3142,3171,29,0
+chicago,406075,406721,647,1,647,90,93,3,0
+houston,444250,444916,674,8,674,311,312,1,0
+phoenix,399620,400073,483,30,483,75,75,0,0
+philadelphia,379996,380138,149,7,149,32,32,0,0
+san-antonio,371308,371614,329,23,329,261,261,0,0
+san-diego,260723,262470,1770,23,1770,67,67,0,0
+dallas,250171,250549,380,2,380,2395,2408,13,0
+fort-worth,248686,248839,153,0,153,274,292,18,0
+jacksonville,268254,268557,347,44,347,712,712,0,0

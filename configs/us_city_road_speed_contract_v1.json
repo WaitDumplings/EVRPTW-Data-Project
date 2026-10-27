@@ -1,0 +1,124 @@
+{
+  "boundary": {
+    "administrative_boundary": "city proper polygon",
+    "frozen_cohort_provider": "U.S. Census TIGER/Line 2025 Places and Area Hydrography",
+    "new_city_osm_admin_boundary": "allowed_with_frozen_OSM_relation_geometry_and_passing_existing_boundary_road_gates",
+    "service_boundary": "administrative boundary minus Census AREAWATER",
+    "service_territory_claim": "geographic benchmark domain, not observed carrier territory"
+  },
+  "city_selection": {
+    "cohort_size": 11,
+    "population_reference_date": "2025-07-01",
+    "population_vintage": 2025,
+    "preset": "configs/us_11city_population_v1.json",
+    "unit": "incorporated_city_proper"
+  },
+  "decision_date": "2026-10-26",
+  "legal_speed": {
+    "hpms_public_spatial_vintage": 2018,
+    "hpms_role": "secondary functional-class/legal-limit evidence, not actual running-speed observations",
+    "priority": [
+      "direction_applicable_OSM_maxspeed",
+      "generic_OSM_maxspeed",
+      "direction_verified_high_confidence_HPMS_SPEED_LIMIT",
+      "within_city_hierarchical_imputation"
+    ]
+  },
+  "new_city_validation": {
+    "acceptance": "tests establish these two extensions; every additional city must pass its own unchanged gates",
+    "applicability": "historical boundary/road-gate extension tests; not a validation of the new terminal-based component pipeline",
+    "austin": {
+      "node_coverage": 0.9968010236724248,
+      "passed": true,
+      "physical_road_length_coverage": 0.9990226987148275,
+      "selected_buffer_km": 1
+    },
+    "population_ranks": [
+      12,
+      13
+    ],
+    "reviewed_cities": [
+      "austin",
+      "san-jose"
+    ],
+    "san_jose": {
+      "node_coverage": 0.9915922724481602,
+      "passed": true,
+      "physical_road_length_coverage": 0.9953311589367306,
+      "selected_buffer_km": 0
+    },
+    "scope": "OSM administrative boundary and driving graph only",
+    "test_date": "2026-10-26"
+  },
+  "next_review": "rebind charging and speed on the common graph; review CLE data structure and construction; independently freeze complete CLE before instance activation",
+  "road_graph": {
+    "access_contract": "local_road_access_contract_v2.json",
+    "access_method": "delivery_terminal_access_v2",
+    "active_od_gate": "directed round-trip feasibility required in Stage 2",
+    "buffer_selection": "smallest junction-node buffer covering all city public nodes recoverable at 20km; global percentage cannot trigger early stop",
+    "default_transport": "frozen Geofabrik PBF",
+    "directions": "preserve one-way and parallel OSM edges",
+    "distance_only_exclusion": false,
+    "legacy_percentage_and_small_component_gates_active": false,
+    "minimum_city_node_coverage": 0.99,
+    "minimum_city_physical_road_length_coverage": 0.995,
+    "network_type": "drive",
+    "osm_observation_date": "record actual PBF snapshot or Overpass osm_base timestamp per build; do not substitute download time for observation year",
+    "osm_snapshot_date": "2026-10-25",
+    "outside_service_boundary_policy": "transit_only",
+    "raw_city_graph_retained": true,
+    "residual_component_policy": "raw disconnected evidence retained; source-safe locations lacking directed local access are pending; no distance deletion",
+    "residual_component_threshold_nodes_exclusive": 100,
+    "routing_buffer_ladder_km": [
+      0,
+      1,
+      2,
+      5,
+      10,
+      20
+    ],
+    "source": "OpenStreetMap",
+    "synthetic_intercomponent_edges": false,
+    "terminal_graph": "real OSM shared-node directed paths kept separate from through graph",
+    "unknown_access": "retain source, mark review_required, exclude from default pool",
+    "verification_sha256": "e7c6002836eefbeb7c0d7ac77d02e23fa4d5659860147dbaf95b8ad0c9703f66"
+  },
+  "running_speed": {
+    "commercial_hour_day_effective_months": "2022-11 through 2023-05 after EPA exclusions",
+    "evidence_scope": "statewide commercial-vehicle prior with EPA gap filling; not measured city/edge/EDV speeds",
+    "formula": "rho=VMT_over_VHT_effective_speed/low_flow_Q85; edge_reference_speed=direction_applicable_legal_speed*rho",
+    "hour_conversion": "seven-day StreetLight hourly fractions collapsed by 2023 NEI monthly VMT times StreetLight weekday fractions",
+    "hour_day_release": "EPA 2022v2 temporal archive published 2025",
+    "low_flow_quantile": 0.85,
+    "low_flow_window_local_time": "weekend 06:00-10:00",
+    "monthly_vmt_year": 2023,
+    "raw_streetlight_observations": "2022-01 through 2023-05",
+    "registry": "configs/us_nei2023_streetlight_state_profiles_v1.json",
+    "service_window_local_time": "08:00-24:00",
+    "speed_distribution_release": "2023 NEI final county inputs published 2025",
+    "states": [
+      "AZ",
+      "CA",
+      "FL",
+      "IL",
+      "NY",
+      "PA",
+      "TX"
+    ],
+    "statewide_vehicle_class": "COMM-MD, MOVES sourceTypeID 32",
+    "unsupported_state_policy": "error_no_national_fallback"
+  },
+  "schema": "evrptw_city_road_speed_review_contract_v1",
+  "status": "road_customer_depot_components_verified_11_cities_speed_rebind_required",
+  "temporal_policy": {
+    "distinguish": [
+      "observation_date",
+      "model_or_inventory_year",
+      "release_date",
+      "acquisition_date"
+    ],
+    "require_all_layers_same_year": false,
+    "require_recorded_vintage_per_layer": true,
+    "snapshot_policy": "reuse frozen inputs; a later snapshot creates a new version"
+  }
+}

@@ -1,0 +1,138 @@
+{
+  "schema": "evrptw_frozen_boundary_inventory_v1",
+  "distributed": false,
+  "cities": {
+    "new-york": {
+      "area_crs": "EPSG:32618",
+      "provider": "U.S. Census TIGER/Line 2025",
+      "admin_boundary": {
+        "path": "data/external/boundaries/2025/new-york/admin_boundary.geojson",
+        "sha256": "4025b0dff47654bbe811a40ff998341c51206d89503b9a1c9e766ae3bea0cf86"
+      },
+      "service_boundary": {
+        "path": "data/external/boundaries/2025/new-york/land_boundary.geojson",
+        "sha256": "3d7376588d85a1a86c4152ada0f893a2598128abb22b2b5d4a9f25ce9d823c70"
+      }
+    },
+    "los-angeles": {
+      "area_crs": "EPSG:32611",
+      "provider": "U.S. Census TIGER/Line 2025",
+      "admin_boundary": {
+        "path": "data/external/boundaries/2025/los-angeles/admin_boundary.geojson",
+        "sha256": "d1ead0377f3ad2f7da0b57ecba00e3330c2f50f4f77d242e3e4254251778c061"
+      },
+      "service_boundary": {
+        "path": "data/external/boundaries/2025/los-angeles/land_boundary.geojson",
+        "sha256": "f4987a537e95bfbc71df5fe8fcc124209f55fce2034da5039f8d55a84c8a51bd"
+      }
+    },
+    "chicago": {
+      "area_crs": "EPSG:32616",
+      "provider": "U.S. Census TIGER/Line 2025",
+      "admin_boundary": {
+        "path": "data/external/boundaries/2025/chicago/admin_boundary.geojson",
+        "sha256": "86c67412df7057f854eee7cfc9cef35bc62fa16916aa6092b559e298683fffaa"
+      },
+      "service_boundary": {
+        "path": "data/external/boundaries/2025/chicago/land_boundary.geojson",
+        "sha256": "4d4dd1d98e56f250edb31c21927b9679cde9da1ff9859b2775c0019bd0b580db"
+      }
+    },
+    "houston": {
+      "area_crs": "EPSG:32615",
+      "provider": "U.S. Census TIGER/Line 2025",
+      "admin_boundary": {
+        "path": "data/external/boundaries/2025/houston/admin_boundary.geojson",
+        "sha256": "95f0e2613f3eaf56adf0d4687825002457c7f58e61e1abd8aa2dbcd455187c0e"
+      },
+      "service_boundary": {
+        "path": "data/external/boundaries/2025/houston/land_boundary.geojson",
+        "sha256": "799bdab1545d881940375e3be1e768f455585f6a3479e9569cc1b1eba1954ab7"
+      }
+    },
+    "phoenix": {
+      "area_crs": "EPSG:32612",
+      "provider": "U.S. Census TIGER/Line 2025",
+      "admin_boundary": {
+        "path": "data/external/boundaries/2025/phoenix/admin_boundary.geojson",
+        "sha256": "8551b2ef8366c3009a25fac736f6c420ce2f7de8cc7b1e3ad31d7c71c54582dd"
+      },
+      "service_boundary": {
+        "path": "data/external/boundaries/2025/phoenix/land_boundary.geojson",
+        "sha256": "9af771cf3944e7a3c0eb826796f7f9af665ed6967ba88092c22a886086473e6b"
+      }
+    },
+    "philadelphia": {
+      "area_crs": "EPSG:32618",
+      "provider": "U.S. Census TIGER/Line 2025",
+      "admin_boundary": {
+        "path": "data/external/boundaries/2025/philadelphia/admin_boundary.geojson",
+        "sha256": "3bb02eba6ab58844dcbfcedfb7100e0c4a4bae8f90e9ea444e50b7626be57fe6"
+      },
+      "service_boundary": {
+        "path": "data/external/boundaries/2025/philadelphia/land_boundary.geojson",
+        "sha256": "52069420fa248fec4f471770db9276e5cf6da77db366d3ff9d718e5646c23a94"
+      }
+    },
+    "san-antonio": {
+      "area_crs": "EPSG:32614",
+      "provider": "U.S. Census TIGER/Line 2025",
+      "admin_boundary": {
+        "path": "data/external/boundaries/2025/san-antonio/admin_boundary.geojson",
+        "sha256": "55a690f4ad9ba541a19315bc1bd46e820f7058493b0f51d3f90995cb7886eda2"
+      },
+      "service_boundary": {
+        "path": "data/external/boundaries/2025/san-antonio/land_boundary.geojson",
+        "sha256": "415509f301f5cd7049fb27d076f76217033eaec05efea30a7afc626ffc75aac1"
+      }
+    },
+    "san-diego": {
+      "area_crs": "EPSG:32611",
+      "provider": "U.S. Census TIGER/Line 2025",
+      "admin_boundary": {
+        "path": "data/external/boundaries/2025/san-diego/admin_boundary.geojson",
+        "sha256": "3b7cdb529f9a3db42eb39c114740514218da5706d90f0ddbebeadae65ee6c1a2"
+      },
+      "service_boundary": {
+        "path": "data/external/boundaries/2025/san-diego/land_boundary.geojson",
+        "sha256": "e54f5ad49ad658ae63ccdf49a024103e00fc4d0a49119e8021764b2403859370"
+      }
+    },
+    "dallas": {
+      "area_crs": "EPSG:32614",
+      "provider": "U.S. Census TIGER/Line 2025",
+      "admin_boundary": {
+        "path": "data/external/boundaries/2025/dallas/admin_boundary.geojson",
+        "sha256": "af01a35ab38d8730ef5c43b951084a9c2c008c5154a710dd1155fb7b1c834cf3"
+      },
+      "service_boundary": {
+        "path": "data/external/boundaries/2025/dallas/land_boundary.geojson",
+        "sha256": "bb214372f55909942616762b0240e0a3286ee32c0770f9e9fdde4cd5188f90ac"
+      }
+    },
+    "fort-worth": {
+      "area_crs": "EPSG:32614",
+      "provider": "U.S. Census TIGER/Line 2025",
+      "admin_boundary": {
+        "path": "data/external/boundaries/2025/fort-worth/admin_boundary.geojson",
+        "sha256": "8435d71fa88be72916bf884729da553629d7586e934ee11c9ffc05f9fb7c53da"
+      },
+      "service_boundary": {
+        "path": "data/external/boundaries/2025/fort-worth/land_boundary.geojson",
+        "sha256": "70302f022420046995e4c99a3b1959663fa25c3610972fda56b0ba42044fc2ad"
+      }
+    },
+    "jacksonville": {
+      "area_crs": "EPSG:32617",
+      "provider": "U.S. Census TIGER/Line 2025",
+      "admin_boundary": {
+        "path": "data/external/boundaries/2025/jacksonville/admin_boundary.geojson",
+        "sha256": "50f74f1a36c499210fd50a4b324980a9bb410b5191100d712e8aa54ddd37d116"
+      },
+      "service_boundary": {
+        "path": "data/external/boundaries/2025/jacksonville/land_boundary.geojson",
+        "sha256": "c2326b96a9939b6b950f00f6521ef347ab5332638f46f6065455fbebef288cfe"
+      }
+    }
+  }
+}

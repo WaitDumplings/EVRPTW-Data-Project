@@ -1,0 +1,84 @@
+{
+  "schema": "evrptw_delivery_location_production_verification_v2",
+  "generated_utc": "2026-10-27T07:54:38.845757+00:00",
+  "passed": true,
+  "policy": "delivery_terminal_access_v2",
+  "verified_city_count": 11,
+  "per_city_check_count": 789,
+  "totals": {
+    "customer_authorized_terminal": 246348,
+    "customer_available": 4214699,
+    "customer_far_1000m": 0,
+    "customer_far_200m": 36,
+    "customer_gained_from_strict": 300819,
+    "customer_identified_complexes": 3649,
+    "customer_known_units": 8610519.0,
+    "customer_local_alternative": 55829,
+    "customer_lost_from_strict": 269,
+    "customer_max_connector_m": 599.8135116883885,
+    "customer_original_available": 4205018,
+    "customer_pending": 42638,
+    "customer_retained": 4257337,
+    "customer_strict_available": 3914149,
+    "depot_authorized_terminal_groups": 2597,
+    "depot_available_groups": 7555,
+    "depot_far_1000m_groups": 0,
+    "depot_local_alternative_groups": 69,
+    "depot_max_connector_m": 193.4027068338603,
+    "depot_original_groups": 7345,
+    "depot_pending_groups": 232,
+    "depot_retained_groups": 7787,
+    "depot_strict_groups": 5154,
+    "output_hashes_verified": 198,
+    "terminal_routes_verified": 1742450
+  },
+  "runtime": {
+    "geopandas": "1.2.0",
+    "networkx": "3.7",
+    "osmnx": "2.1.1",
+    "pandas": "2.3.3",
+    "pyarrow": "21.0.0",
+    "scipy": "1.18.1",
+    "shapely": "2.2.0"
+  },
+  "tests": {
+    "component_tests": {
+      "exit_code": 0,
+      "log": "component_tests.log",
+      "passed": 19
+    },
+    "full_suite_all_green": false,
+    "portable_regression": {
+      "deselected": 6,
+      "exit_code": 0,
+      "log": "portable_regression_tests.log",
+      "passed": 335
+    },
+    "unresolved_historical_checks": [
+      {
+        "count": 3,
+        "module": "test_dataset_archive_tool.py",
+        "reason": "required flock executable unavailable on macOS"
+      },
+      {
+        "count": 2,
+        "module": "test_runtime_supervisor.py",
+        "reason": "isolated supervisor subprocess resets PYTHONPATH and cannot import pyarrow from task runtime"
+      },
+      {
+        "count": 1,
+        "module": "test_release_discipline.py",
+        "reason": "legacy launcher test expects CLE_v2 while existing launcher uses CLE_v3"
+      }
+    ]
+  },
+  "limits": [
+    "No surveyed entrances or owner permits",
+    "No turn-restriction or conditional-access relations",
+    "Finite frozen source coverage",
+    "Charging/speed common-graph rebinding remains pending",
+    "Whole CLE structure and activation not frozen"
+  ],
+  "upstream_verification_sha256": "e7c6002836eefbeb7c0d7ac77d02e23fa4d5659860147dbaf95b8ad0c9703f66",
+  "scope": "Evidence from the upstream production run; this repository does not distribute its raw inputs or CLE/instance bundles."
+}

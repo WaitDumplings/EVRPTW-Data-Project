@@ -1,0 +1,14 @@
+# Local validation environment; not a cross-platform dependency lock.
+geopandas==1.2.0
+shapely==2.2.0
+osmnx==2.1.1
+networkx==3.7
+numpy==2.5.4
+pandas==2.3.3
+pyarrow==21.0.0
+pyogrio==0.13.0
+pyproj==3.8.0
+scipy==1.18.1
+requests==2.34.2
+matplotlib==3.11.2
+pytest==8.4.2

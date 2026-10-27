@@ -1,0 +1,51 @@
+{
+  "arizona": {
+    "region": "arizona",
+    "pbf_source_url": "https://download.geofabrik.de/north-america/us/arizona-261025.osm.pbf",
+    "pbf_sha256": "dcff11677118fff8101f8ed7d02bc5ffd0a5a799bc23e26da1cebf3268678ac9",
+    "pbf_replication_timestamp_utc": "2026-10-25T21:21:21Z",
+    "local_path": "data/external/osm/arizona-261025.osm.pbf"
+  },
+  "florida": {
+    "region": "florida",
+    "pbf_source_url": "https://download.geofabrik.de/north-america/us/florida-261025.osm.pbf",
+    "pbf_sha256": "12e675a181e3c0d2cc34d3c3cb5fb115a04b69ad9e5d212bee1114cb22d1bb46",
+    "pbf_replication_timestamp_utc": "2026-10-25T21:21:21Z",
+    "local_path": "data/external/osm/florida-261025.osm.pbf"
+  },
+  "illinois": {
+    "region": "illinois",
+    "pbf_source_url": "https://download.geofabrik.de/north-america/us/illinois-261025.osm.pbf",
+    "pbf_sha256": "6aa348384317c605c9247fcc555e66bbfd2e1f17e8b26313a2905e81a7abb135",
+    "pbf_replication_timestamp_utc": "2026-10-25T21:21:21Z",
+    "local_path": "data/external/osm/illinois-261025.osm.pbf"
+  },
+  "new-york": {
+    "region": "new-york",
+    "pbf_source_url": "https://download.geofabrik.de/north-america/us/new-york-261025.osm.pbf",
+    "pbf_sha256": "725e0965408c558338e601499e42cd7a58a8b631051f78919527bce383e85d09",
+    "pbf_replication_timestamp_utc": "2026-10-25T21:21:21Z",
+    "local_path": "data/external/osm/new-york-261025.osm.pbf"
+  },
+  "pennsylvania": {
+    "region": "pennsylvania",
+    "pbf_source_url": "https://download.geofabrik.de/north-america/us/pennsylvania-261025.osm.pbf",
+    "pbf_sha256": "3aa7420f9dcce032d2941b2bcec471e9c9bd90a611ab7a24d249410f3a473305",
+    "pbf_replication_timestamp_utc": "2026-10-25T21:21:21Z",
+    "local_path": "data/external/osm/pennsylvania-261025.osm.pbf"
+  },
+  "socal": {
+    "region": "socal",
+    "pbf_source_url": "https://download.geofabrik.de/north-america/us/california/socal-261025.osm.pbf",
+    "pbf_sha256": "a74410b3d65658e74b9fab49d72496619ee0312532d7fa1906c53c59b17e45d6",
+    "pbf_replication_timestamp_utc": "2026-10-25T21:21:21Z",
+    "local_path": "data/external/osm/socal-261025.osm.pbf"
+  },
+  "texas": {
+    "region": "texas",
+    "pbf_source_url": "https://download.geofabrik.de/north-america/us/texas-261025.osm.pbf",
+    "pbf_sha256": "d92237e454c09ce22b4e6403a3d97201eabcc776ed1a6c5e6a922ce65430f478",
+    "pbf_replication_timestamp_utc": "2026-10-25T21:21:21Z",
+    "local_path": "data/external/osm/texas-261025.osm.pbf"
+  }
+}

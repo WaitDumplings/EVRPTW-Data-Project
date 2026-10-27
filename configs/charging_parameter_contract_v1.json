@@ -1,0 +1,89 @@
+{
+  "schema": "evrptw_charging_parameter_contract_v1",
+  "status": "accepted_production_policy",
+  "geographic_rule": "one common rule across all states; no city/state compatibility exception",
+  "location_pool_unchanged": 5694,
+  "native_reference_vehicle": {
+    "model": "2025 Rivian Commercial Van Delivery 700",
+    "native_connectors": {
+      "ac_level2": "J1772",
+      "dc_fast": "CCS1/J1772COMBO"
+    },
+    "ac_cap_kw": 11.0,
+    "dc_cap_kw": 100.0,
+    "cap_semantics": "manufacturer maximum; not whole-charge average",
+    "source": {
+      "name": "rivian_2025_quickref_v17.pdf",
+      "url": "https://assets.ctfassets.net/2md5qhoeajym/5FQcJgfAOa4vDYu9rWwEYO/2fa75339d6e533532ba08bf395275015/RCV-QuickRef-v17.pdf",
+      "retrieved_utc": "2026-10-27T00:02:24.249136+00:00",
+      "sha256": "dd1a1644c137c22ae93aa923c9153f0cbeb8527c0ee2cdb5ee56b1bd57eb4653",
+      "bytes": 567478
+    },
+    "printed_page": 6,
+    "gvwr_lb": 9500,
+    "afdc_weight_class_interpretation": "FHWA Class 2, so AFDC LD/class1-2 is not by itself incompatibility; physical clearances remain unknown"
+  },
+  "configuration_selection": {
+    "candidate_unit": "one eligible source member, one equipment/connector configuration at the frozen location",
+    "compatibility_precedes_power": true,
+    "modes": "enumerate AC and DC independently; do not let a CHAdeMO DC count hide J1772 AC",
+    "source_eligibility": "only frozen safe source IDs, matching source address/coordinates, with original public/location/road eligibility; retain access and equipment provenance",
+    "default_adapters": "none; an optional adapter scenario needs vehicle-model/AC-or-DC/network support evidence, not brand-only inference",
+    "never_sum_power_or_ports": true,
+    "selection_rule": "prefer positive reported compatible power passing QA; choose maximum vehicle-capped rate among those; if none, use national connector/mode median and retain imputation flag; deterministic source/unit tie-break"
+  },
+  "power_source": {
+    "schema": "afdc_charging_units_audit_snapshot_v1",
+    "request_started_utc": "2026-10-27T00:01:14.394781+00:00",
+    "retrieved_utc": "2026-10-27T00:03:57.499877+00:00",
+    "endpoint": "https://developer.nlr.gov/api/alt-fuel-stations/v1/ev-charging-units.csv",
+    "query": {
+      "country": "US",
+      "fuel_type": "ELEC",
+      "access": "public",
+      "status": "E",
+      "limit": "all"
+    },
+    "response_headers": {
+      "Date": "Tue, 27 Oct 2026 00:01:15 GMT",
+      "Last-Modified": "Tue, 27 Oct 2026 00:01:14 GMT",
+      "ETag": null,
+      "Content-Type": "text/csv; charset=utf-8"
+    },
+    "bytes": 100527722,
+    "sha256": "d894efdee93b811f64db4c84acf4f1ad0d8c9709dbdd1964ba51049f3191957b",
+    "scope": "private national source input; join only previously admitted public-safe location/member IDs for location outputs",
+    "temporal_limit": "rolling retrieval; do not assert simultaneous capture with the separately frozen station CSV"
+  },
+  "power_vintage": "Snapshot Date 2026-10-27 UTC; local retrieval date 2026-10-26; not the identical retrieval as frozen station CSV; per-port measurement year unknown",
+  "new_national_medians_kw": {
+    "ac_level2": 6.5,
+    "dc_fast": 240.0
+  },
+  "missing_power": "only fill kW after connector/mode compatibility; never infer compatibility from a missing power value; unavailable national median is an error",
+  "power_qa": "retain raw values; nonfinite/nonpositive values missing; J1772 L2 reports above 19.2kW flagged against standard reference and treated as unknown in the conservative trial, without removing locations; median remains 6.5 under this QA",
+  "derating": {
+    "factor": 0.9,
+    "status": "transparent benchmark engineering assumption, not empirical Rivian full-charge calibration",
+    "NREL_89174_actual_publication": "December 2024",
+    "NREL_89174_evidence": "PDF page34, printed page17 assumes grid-input to charger-output energy efficiency 90%; does not establish an average peak-power factor",
+    "NREL_71198_actual_publication": "February 2019",
+    "NREL_71198_evidence": "PDF page24, printed page16 models temperature and SOC-dependent DC power; no justification for a universal 0.90 power multiplier",
+    "sensitivity": "0.85/0.90/0.95 closed-form charge-time comparison only; not routing/solver evidence"
+  },
+  "audit_result": {
+    "legacy_mismatch": 490,
+    "recoverable_j1772_same_record": 4,
+    "remaining_without_native_compatible_connector": 486,
+    "compatible_locations": 5208,
+    "conservative_reported_power_locations": 4964,
+    "conservative_imputed_power_locations": 244
+  },
+  "policy": "native_compatible_connector_power_v1",
+  "unit_source": {
+    "path": "data/sources/afdc/20261027/afdc_us_public_available_charging_units.csv",
+    "sha256": "d894efdee93b811f64db4c84acf4f1ad0d8c9709dbdd1964ba51049f3191957b",
+    "snapshot_date_utc": "2026-10-27",
+    "retrieved_utc": "2026-10-27T00:03:57.499877+00:00"
+  }
+}

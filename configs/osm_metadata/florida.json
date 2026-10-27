@@ -1,0 +1,6 @@
+{
+  "sha256": "12e675a181e3c0d2cc34d3c3cb5fb115a04b69ad9e5d212bee1114cb22d1bb46",
+  "replication_timestamp_utc": "2026-10-25T21:21:21Z",
+  "source_url": "https://download.geofabrik.de/north-america/us/florida-261025.osm.pbf",
+  "role": "expected frozen source metadata copied from verified inventory; raw PBF not distributed"
+}

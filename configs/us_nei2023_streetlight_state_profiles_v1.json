@@ -1,0 +1,54 @@
+{
+  "schema": "evrptw_moves_state_profile_registry_v1",
+  "profile_id": "us_nei2023_streetlight_state_profiles_v1",
+  "decision_date": "2026-10-26",
+  "source_type_id": 32,
+  "unsupported_state_policy": "error_no_national_fallback",
+  "states": {
+    "04": {
+      "abbreviation": "AZ",
+      "profile": "us_nei2023_streetlight_state_profiles_v1/AZ.json"
+    },
+    "06": {
+      "abbreviation": "CA",
+      "profile": "us_nei2023_streetlight_state_profiles_v1/CA.json"
+    },
+    "12": {
+      "abbreviation": "FL",
+      "profile": "us_nei2023_streetlight_state_profiles_v1/FL.json"
+    },
+    "17": {
+      "abbreviation": "IL",
+      "profile": "us_nei2023_streetlight_state_profiles_v1/IL.json"
+    },
+    "36": {
+      "abbreviation": "NY",
+      "profile": "us_nei2023_streetlight_state_profiles_v1/NY.json"
+    },
+    "42": {
+      "abbreviation": "PA",
+      "profile": "us_nei2023_streetlight_state_profiles_v1/PA.json"
+    },
+    "48": {
+      "abbreviation": "TX",
+      "profile": "us_nei2023_streetlight_state_profiles_v1/TX.json"
+    }
+  },
+  "city_state_fips": {
+    "new-york": "36",
+    "los-angeles": "06",
+    "chicago": "17",
+    "houston": "48",
+    "phoenix": "04",
+    "philadelphia": "42",
+    "san-antonio": "48",
+    "san-diego": "06",
+    "dallas": "48",
+    "fort-worth": "48",
+    "jacksonville": "12"
+  },
+  "source_documentation": {
+    "nei2023": "https://gaftp.epa.gov/Air/nei/2023/doc/TSD/onroadmobile-agencymovesinputs.html",
+    "platform2022v2": "https://www.epa.gov/system/files/documents/2025-12/2022v2_emismod_tsd_base_december2025.pdf"
+  }
+}

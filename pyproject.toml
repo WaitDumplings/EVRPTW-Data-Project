@@ -1,0 +1,43 @@
+[build-system]
+requires = ["hatchling>=1.25"]
+build-backend = "hatchling.build"
+
+[project]
+name = "evrptw-data-foundation"
+version = "0.1.0.dev0"
+description = "Reviewed geographic and potential delivery-location components for EVRPTW research"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+  "geopandas>=1.0,<2", "matplotlib>=3.8,<4", "networkx>=3.2,<4",
+  "numpy>=1.26,<3", "osmnx>=2.0,<3", "pandas>=2.1,<3",
+  "pyarrow>=15,<22", "pyogrio>=0.9,<1", "pyproj>=3.6,<4",
+  "requests>=2.31,<3", "scipy>=1.12,<2", "shapely>=2.0,<3"
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8,<10", "ruff>=0.9,<1", "build>=1,<2"]
+osm = ["osmium>=4,<5"]
+
+[project.scripts]
+evrptw-data = "evrptw_cle.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/evrptw_cle"]
+
+[tool.hatch.build.targets.wheel.force-include]
+"configs" = "evrptw_cle/resources"
+
+[tool.hatch.build.targets.sdist]
+include = ["src", "configs", "tests", "docs", "scripts", "evidence", "README.md", "NOTICE.md", "pyproject.toml"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E4", "E7", "E9", "F"]

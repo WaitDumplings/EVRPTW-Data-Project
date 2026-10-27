@@ -1,0 +1,30 @@
+{
+  "external_inputs_unchanged": true,
+  "external_verification_sha256": "e7c6002836eefbeb7c0d7ac77d02e23fa4d5659860147dbaf95b8ad0c9703f66",
+  "input_sha256": {
+    "customer_table": "b7597d09ff1dbe0f7a1a40c669cb02f7e61e5ad684b35bfb5241f896c28c999d",
+    "depot_table": "d3794119a6a2d9bae4d76c194a630696d554356fd4288bbfb494dda799ce4111",
+    "graph": "f69fde651aa163cf4c32e26ed74b8e818d2cc8229a2cef6f9c190cdf0d23b2ef"
+  },
+  "passed": true,
+  "records": [
+    {
+      "authorized_terminal_segments": 1,
+      "destination": "dallas-depot-w1035864837",
+      "distance_m": 63852.96668352264,
+      "source": "cus_site_dallas_965519749df086b58772"
+    },
+    {
+      "authorized_terminal_segments": 1,
+      "destination": "cus_site_dallas_965519749df086b58772",
+      "distance_m": 63509.20539480553,
+      "source": "dallas-depot-w1035864837"
+    }
+  ],
+  "scope": "ported pair consumer on two external production OD witnesses; not complete regeneration",
+  "source_egress_destination_ingress_only": true,
+  "test_only_speeds_kph": {
+    "connector": 5,
+    "terminal": 10
+  }
+}

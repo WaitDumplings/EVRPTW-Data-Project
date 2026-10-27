@@ -1,0 +1,9 @@
+{
+  "passed": true,
+  "package_loaded_from_isolated_install": true,
+  "working_directory_outside_source_tree": true,
+  "policy_and_source_kernel_resources_in_wheel": true,
+  "seven_state_statistics_reproduced_from_installed_wheel": true,
+  "obsolete_unit_type_classifier_absent": true,
+  "dependency_environment": "recorded local geospatial runtime; not a fresh network dependency install"
+}

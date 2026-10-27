@@ -1,0 +1,109 @@
+{
+  "accepted_date": "2026-10-26",
+  "activation": {
+    "covariates": "residential_units when available, with its evidence-quality metadata; missing units remain missing",
+    "legacy_implementation": "Existing unit-weighted priority consumes canonical site IDs with capacity one and exactly N unique IDs; missing units use neutral internal weight one without replacing nullable household attributes; probability model remains pending audit.",
+    "probability_formula": "pending later activation-model audit; recording residential units does not fix an activation probability or demand rule",
+    "selection_unit": "site_id selected at most once per instance"
+  },
+  "active_site_orders": {
+    "aggregation_unit": "one active site carries the aggregate shipment demand assigned to that site for the operating day",
+    "apartment_interpretation": "an apartment site may carry more demand because multiple resident households can generate orders, while it still counts as one active customer location",
+    "demand_meaning": "under the existing benchmark, demand is shipment volume in cubic centimetres; package count and residential-unit count remain separate attributes",
+    "implementation_status": "pending demand-model audit; current orders.match_amazon_order_templates assigns a feasible observed Amazon stop template per location and does not condition on residential_units",
+    "units_to_orders": "residential units can inform an audited site-order model; they do not imply that all households order every day or that demand numerically equals the unit count"
+  },
+  "counting_semantics": {
+    "active_customer_count": "N is the number of distinct selected delivery-site IDs in an instance; each selected house or apartment site contributes exactly one",
+    "cle_customer_pool": "distinct identifiable potential residential delivery sites in the city; one independent house contributes one site and one identified apartment complex contributes one site",
+    "coverage": "CLE counts identified candidates and their eligibility, not a verified complete census of all real delivery locations",
+    "residential_units": "site-level housing-unit attribute; it does not expand the site into multiple customer nodes"
+  },
+  "customer": "one latent customer per identified residential complex or independent residential site; multiple buildings within the same complex are members, not additional customers",
+  "independent_residence": "a standalone residence outside an identified complex remains its own site; a generic residential neighbourhood is not automatically one customer",
+  "inference_standard": {
+    "precision_not_required": "verified doorstep or entrance positions, exact parcel boundaries and exact household counts are not prerequisites for a potential customer location",
+    "residential_status": "use a common, source-supported inference from Microsoft, NSI and OSM across all cities; residential status and complex membership are modeled evidence, not cadastral ground truth",
+    "uncertainty": "retain source references and unresolved status where evidence is insufficient; missing unit estimates or fine residential-type disagreement alone do not invalidate otherwise supported residential locations"
+  },
+  "local_data_sources_allowed": false,
+  "membership": {
+    "building_footprints": "retain Microsoft and OSM geometry references in source provenance for membership checks; no building count or area-based scale attribute is required; a Microsoft footprint is not itself a verified complex boundary",
+    "building_roof_containment_required": false,
+    "overlapping_site_boundaries": "resolve duplicate and parent/member identities before assigning records; unresolved competing sites remain explicitly ambiguous",
+    "source_record_owner": "each deduplicated NSI fd_id has at most one canonical site owner within a city snapshot",
+    "spatial_rule": "where a source-supported site extent is available, ordinary-residential NSI evidence may be associated when it covers the source point, including roof edges, courtyards and other open space within the site; a verified parcel boundary is not required"
+  },
+  "method_references": [
+    "https://wiki.openstreetmap.org/wiki/Tag:residential%3Dapartments",
+    "https://wiki.openstreetmap.org/wiki/Tag:type%3Dsite",
+    "https://wiki.openstreetmap.org/wiki/Tag:landuse%3Dresidential"
+  ],
+  "previous_audit": "the 220-case review describes building-level aggregation under v2; a multi-building M verdict is not automatically an error under v3 and requires site-identity review; previous counts and weighted estimates are not site-level error rates",
+  "production": {
+    "artifact_path_base": "generator_root",
+    "artifact_root": null,
+    "available_customer_sites": 4214699,
+    "component_frozen": true,
+    "entire_cle_frozen": false,
+    "generator_integrated": true,
+    "identified_complexes_available": 3649,
+    "pending_access_sites": 42638,
+    "retained_source_safe_sites": 4257337,
+    "road_access_contract": "local_road_access_contract_v2.json",
+    "source_identities_geometries_and_units_unchanged": true,
+    "verification_sha256": "e7c6002836eefbeb7c0d7ac77d02e23fa4d5659860147dbaf95b8ad0c9703f66",
+    "verified_city_count": 11,
+    "verification_reference": "evidence/production_reference.json",
+    "verification_scope": "upstream production reference; not a full regeneration from this new repository"
+  },
+  "production_changed": true,
+  "representative_point_and_access": {
+    "access_interpretation": "the connector is a modeled routing access proxy; it does not certify a physical gate, a barrier-free path or site access permission",
+    "current_projection_implementation": "Nearest diagnostic physical road first; soft building/connectivity failures may check up to 8 strict-permission local ways under local_road_access_contract_v2. Preserve the representative point, source geometry, directed offsets and real ingress/egress ledgers.",
+    "interpretation": "one complex per customer is a benchmark aggregation assumption, not evidence of one real-world doorstep or mailroom stop",
+    "multiple_entrances": "retain alternatives but choose one documented canonical access per activated site; do not duplicate the customer",
+    "observed_single_delivery_stop_verified": false,
+    "representative_point": "must lie within the site; need not lie on a building roof",
+    "road_eligibility": "delivery host allowlist excludes motorway, motorway_link, trunk and trunk_link; real outside-city roads may host a border site's access and connect the network. Ordinary private roads are modeled invited-delivery terminals only; no public through-routing. Explicit prohibition, sensitive sites and unsupported barriers remain excluded.",
+    "routing_access_point": "store separately; project full site geometry to local physical roads and require real directed public-SCC access; an observed real entrance is optional evidence, not a prerequisite"
+  },
+  "review_scope": "Customer-location methodology, production site identity/unit ownership and eleven-city road-accessible layer recomputation completed; activation and demand model remain separate reviews",
+  "scale_attribute_policy": "record residential_units only; do not compute building counts, building areas or site areas as customer scale attributes, activation weights or substitutes for missing residential units",
+  "schema": "evrptw_customer_residential_site_v3",
+  "site_attributes": {
+    "nsi_modeled_unit_source_sum": "raw source sum retained separately for provenance; not automatically a distinct-household count",
+    "residential_family_evidence": "retain native NSI family mixture independently of site size or estimated units",
+    "residential_units": "the sole site-scale attribute: a nullable residential-unit estimate with source, scope, confidence and aggregation status; no invented count when unavailable",
+    "residential_units_scope": "site_total, non_overlapping_building_components, or unresolved",
+    "site_geometry": "source-supported complex or independent-residence extent, with source and confidence",
+    "site_id": "canonical customer identity, independent of source building IDs"
+  },
+  "site_boundary_evidence": {
+    "additional_candidate": "OSM site relation with explicit residential-complex identity and member/perimeter evidence; type=site alone is insufficient",
+    "coverage": "report the coverage of inferred complex identities and unresolved candidates across the 11 cities using the same frozen OSM PBFs; exact real-world complex boundaries are not a prerequisite, and previous building-only extraction cannot establish site-level coverage",
+    "insufficient_alone": [
+      "generic landuse=residential covering a neighbourhood or block",
+      "one Microsoft parent footprint spanning several buildings",
+      "spatial proximity, matching residential type or a road-enclosed block",
+      "a generic name shared across multiple separate sites"
+    ],
+    "missing_boundary": "retain independent residence or provisional building candidates with site_scope_unresolved; do not claim all unidentified complexes have been deduplicated",
+    "primary_candidate": "OSM area with landuse=residential and residential=apartments, subject to geometry, identity and scope checks"
+  },
+  "source_registry": "us_11city_customer_sources_v3.json",
+  "sources": [
+    "Microsoft",
+    "USACE NSI",
+    "OpenStreetMap"
+  ],
+  "status": "accepted_production_migration_verified_11city",
+  "supersedes": "customer_building_service_point_contract_v2.json",
+  "unit_counting": {
+    "building_components": "sum only when component estimates have supported distinct and non-overlapping scope",
+    "location_eligibility": "missing or uncertain residential units alone must not exclude an otherwise supported residential location; units are auxiliary modeled estimates for later activation and demand review",
+    "record_dedup_is_not_household_dedup": true,
+    "site_total": "a source estimate known to describe the whole complex is counted once at the site level; never multiplied by building count",
+    "uncertain_scope_or_overlap": "retain source values and uncertainty; operational unit estimate remains null until the aggregation rule is supported"
+  }
+}

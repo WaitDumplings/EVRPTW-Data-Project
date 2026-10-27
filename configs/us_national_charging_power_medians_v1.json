@@ -1,0 +1,103 @@
+{
+  "schema": "evrptw_national_charging_power_medians_v1",
+  "source": "NLR_AFDC_electric_vehicle_charging_ports_API",
+  "source_url": "https://developer.nlr.gov/api/alt-fuel-stations/v1/ev-charging-units.csv",
+  "source_snapshot": "afdc_us_public_available_charging_units.csv",
+  "source_snapshot_sha256": "d894efdee93b811f64db4c84acf4f1ad0d8c9709dbdd1964ba51049f3191957b",
+  "selection": {
+    "fuel_type": "ELEC",
+    "access": "public",
+    "status": "E",
+    "country": "US",
+    "compatibility": "reference_vehicle_connector_only",
+    "statistic": "connector_port_count_weighted_median"
+  },
+  "national_mode_medians_kw": {
+    "ac_level2": 6.5,
+    "dc_fast": 240.0
+  },
+  "evidence": {
+    "ac_level2": {
+      "compatible_connector": "J1772",
+      "charging_unit_observation_count": 157148,
+      "connector_port_weight": 157169,
+      "power_column": "EV J1772 Power Output (kW)",
+      "weight_column": "EV J1772 Connector Count"
+    },
+    "dc_fast": {
+      "compatible_connector": "CCS/J1772COMBO",
+      "charging_unit_observation_count": 38425,
+      "connector_port_weight": 39262,
+      "power_column": "EV CCS Power Output (kW)",
+      "weight_column": "EV CCS Connector Count"
+    }
+  },
+  "generated_utc": "2026-10-27T00:03:57.499877+00:00",
+  "status": "active_frozen_compatible_mode_registry",
+  "retrieval_manifest": {
+    "schema": "afdc_charging_units_audit_snapshot_v1",
+    "request_started_utc": "2026-10-27T00:01:14.394781+00:00",
+    "retrieved_utc": "2026-10-27T00:03:57.499877+00:00",
+    "endpoint": "https://developer.nlr.gov/api/alt-fuel-stations/v1/ev-charging-units.csv",
+    "query": {
+      "country": "US",
+      "fuel_type": "ELEC",
+      "access": "public",
+      "status": "E",
+      "limit": "all"
+    },
+    "response_headers": {
+      "Date": "Tue, 27 Oct 2026 00:01:15 GMT",
+      "Last-Modified": "Tue, 27 Oct 2026 00:01:14 GMT",
+      "ETag": null,
+      "Content-Type": "text/csv; charset=utf-8"
+    },
+    "bytes": 100527722,
+    "sha256": "d894efdee93b811f64db4c84acf4f1ad0d8c9709dbdd1964ba51049f3191957b",
+    "scope": "private national source input; join only previously admitted public-safe location/member IDs for location outputs",
+    "temporal_limit": "rolling retrieval; do not assert simultaneous capture with the separately frozen station CSV"
+  },
+  "source_filter_sensitivity": {
+    "public_source_filter": {
+      "policy": {
+        "version": "public_location_exclusions_v1",
+        "excluded_categories": [
+          "military",
+          "intelligence",
+          "law_enforcement",
+          "correctional",
+          "nuclear",
+          "motor_access_prohibited"
+        ],
+        "civil_airports_and_ports_allowed": true,
+        "private_commercial_sites_allowed": true,
+        "sensitive_point_buffer_m": 50.0,
+        "spatial_match": "source geometry intersects excluded facility area or buffered sensitive POI",
+        "export_removed_locations": false
+      },
+      "spatial_mask_applied": false,
+      "input_count": 83546,
+      "removed_count": 152,
+      "retained_count": 83394,
+      "removed_reason_counts": {
+        "correctional": 21,
+        "intelligence": 4,
+        "law_enforcement": 110,
+        "military": 10,
+        "nuclear": 7
+      }
+    },
+    "additional_restricted_station_count": 1797,
+    "unit_rows_after_filters": 256236,
+    "station_ids_after_filters": 81597,
+    "medians_after_source_and_access_filters": {
+      "ac_level2": 6.5,
+      "dc_fast": 240.0
+    },
+    "medians_after_additional_mode_and_power_QA": {
+      "ac_level2": 6.5,
+      "dc_fast": 240.0
+    },
+    "scope": "national aggregate calibration sensitivity uses direct known-host tags/text; city configuration outputs independently inherit frozen OSM masks; no nationwide spatial completeness claim"
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "sha256": "d92237e454c09ce22b4e6403a3d97201eabcc776ed1a6c5e6a922ce65430f478",
+  "replication_timestamp_utc": "2026-10-25T21:21:21Z",
+  "source_url": "https://download.geofabrik.de/north-america/us/texas-261025.osm.pbf",
+  "role": "expected frozen source metadata copied from verified inventory; raw PBF not distributed"
+}

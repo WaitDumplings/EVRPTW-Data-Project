@@ -1,0 +1,62 @@
+{
+  "definition": "potential spatial departure location; multiple operators may share one location; current business operations are not asserted",
+  "group_identity": "facility_group_id",
+  "grouping_policy": {
+    "address_max_span_m": 100.0,
+    "area_hard_gate": false,
+    "coordinate_alias_tolerance_m": 1.0,
+    "multiple_operators_per_location": true,
+    "office_only_policy": "retain_as_tier_b",
+    "polygon_overlap_min_smaller_area_fraction": 0.8,
+    "supplemental_campus_max_span_m": 1000.0,
+    "version": "spatial_depot_v2"
+  },
+  "limits": [
+    "OSM is incomplete; source-supported modeled candidates are not a depot census",
+    "address 100m and supplemental campus 1000m are fixed modeling assumptions",
+    "OSM object edit dates are not observation or operation dates",
+    "private exclusion masks are build inputs and must never be bundled as a public POI layer"
+  ],
+  "preexisting_source_supported_sites_preserved": true,
+  "public_location_policy": {
+    "civil_airports_and_ports_allowed": true,
+    "excluded_categories": [
+      "military",
+      "intelligence",
+      "law_enforcement",
+      "correctional",
+      "nuclear",
+      "motor_access_prohibited"
+    ],
+    "export_removed_locations": false,
+    "private_commercial_sites_allowed": true,
+    "private_road_default_access": "ordinary private commercial access admitted as modeled invited-delivery terminal, with authorization assumption explicit and owner consent unobserved; never public through-routing; hard prohibitions, sensitive sites and unsupported barriers remain excluded",
+    "sensitive_point_buffer_m": 50.0,
+    "spatial_match": "source geometry intersects excluded facility area or buffered sensitive POI",
+    "version": "public_location_exclusions_v1"
+  },
+  "road_access_contract": "local_road_access_contract_v2.json",
+  "sampling": "uniform spatial location first; tier-A-preferred access within location; no area/company/member-count weights",
+  "schema": "evrptw_depot_location_contract_v2",
+  "source_registry": "us_11city_depot_osm_sources_v1.json",
+  "status": "modeling_method_frozen_generator_integrated_11_city_access_verified",
+  "tiers": {
+    "A": "source-supported parcel carrier or dispatch facility proxy",
+    "B": "warehouse/logistics facility or ordinary logistics office proxy",
+    "C": "generic industrial context only, retail counters, unsupported non-ground office; not candidates"
+  },
+  "validation": {
+    "all_city_access_audits_passed": true,
+    "artifact_root": null,
+    "available_location_count": 7555,
+    "city_count": 11,
+    "component_frozen": true,
+    "component_scope": "road/customer/depot location components; charging/speed rebind, whole CLE and instance activation remain separate",
+    "pending_group_count": 232,
+    "retained_source_safe_group_count": 7787,
+    "source_geometries_and_spatial_groups_unchanged": true,
+    "verification_sha256": "e7c6002836eefbeb7c0d7ac77d02e23fa4d5659860147dbaf95b8ad0c9703f66",
+    "verification_reference": "evidence/production_reference.json",
+    "verification_scope": "upstream production reference; not a full regeneration from this new repository"
+  }
+}

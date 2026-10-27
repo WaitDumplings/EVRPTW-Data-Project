@@ -1,0 +1,6 @@
+{
+  "sha256": "3aa7420f9dcce032d2941b2bcec471e9c9bd90a611ab7a24d249410f3a473305",
+  "replication_timestamp_utc": "2026-10-25T21:21:21Z",
+  "source_url": "https://download.geofabrik.de/north-america/us/pennsylvania-261025.osm.pbf",
+  "role": "expected frozen source metadata copied from verified inventory; raw PBF not distributed"
+}

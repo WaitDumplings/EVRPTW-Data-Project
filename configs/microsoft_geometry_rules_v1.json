@@ -1,0 +1,28 @@
+{
+  "schema": "evrptw_microsoft_composite_audit_rules_v1",
+  "status": "geometry_rules_reviewed_source_kernel_port",
+  "new_snapshot": "Microsoft GlobalMLBuildingFootprints 2026-08-13",
+  "legacy_snapshot": "Microsoft USBuildingFootprints legacy v2, seven frozen SHA-256 files",
+  "boundary_rule": "reuse each frozen city land mask and representative-point membership, without clipping polygons",
+  "geometry_validity_rule": "require valid source WGS84 geometry and valid positive-area metric-CRS geometry; preserve every rejected original in the audit universe",
+  "new_priority": "retain valid, positive-area Polygon/MultiPolygon geometries; exact normalized-geometry duplicates retain the smallest stable source ID",
+  "invalid_new_policy": "quarantine original invalid geometry, use its envelope as a conservative no-fill guard",
+  "legacy_candidate_rule": "valid positive-area geometry, strict polygon-to-new-geometry distance greater than the clearance; no clipping, union, splitting or centroid-only deduplication",
+  "primary_clearance_m": 10.0,
+  "clearance_sensitivity_m": [
+    2.0,
+    5.0,
+    10.0,
+    20.0
+  ],
+  "threshold_basis": "conservative engineering guard, not a validated positional-error bound; 10 m also separates the primary fill from the existing near-match search distance",
+  "legacy_legacy_exact_duplicates": "normalized geometry, retain smallest stable source ID",
+  "legacy_legacy_overlap_policy": "quarantine every candidate in a positive-area overlap pair, never union or trim roofs",
+  "overlap_area_tolerance_m2": 0.01,
+  "sensitivity_overlap_policy": "detect legacy overlap conflicts at the least restrictive 2 m clearance and apply that same conflict mask at every clearance",
+  "nsi_role": "match after geometric admission; ordinary RES1/RES2/RES3 only; unique G1 only is the primary statistic; G2 stays separate and manual-review pending",
+  "new_G1_preservation": "require that no existing unique new-footprint G1 match becomes ambiguous or changes its matched new ID after adding legacy geometries",
+  "customer_semantics": "geometric input only; final customer identity uses identified_residential_site_v3",
+  "temporal_policy": "new capture date stays unknown; legacy capture range/release retained; a legacy fill is not verified current construction",
+  "scope": "same national geometry rules; no per-city threshold optimization; production reference remains upstream"
+}

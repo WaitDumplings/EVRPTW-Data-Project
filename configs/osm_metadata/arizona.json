@@ -1,0 +1,6 @@
+{
+  "sha256": "dcff11677118fff8101f8ed7d02bc5ffd0a5a799bc23e26da1cebf3268678ac9",
+  "replication_timestamp_utc": "2026-10-25T21:21:21Z",
+  "source_url": "https://download.geofabrik.de/north-america/us/arizona-261025.osm.pbf",
+  "role": "expected frozen source metadata copied from verified inventory; raw PBF not distributed"
+}

@@ -1,0 +1,142 @@
+{
+  "schema": "evrptw_moves5_speed_retention_profile_v1",
+  "profile_id": "us_epa_nei2023_speed_streetlight2022v2_hour_tx_source32_static_08_24_v1",
+  "source_model": "EPA 2023 NEI speed distributions + EPA 2022v2 uniform StreetLight hour/day temporal inputs",
+  "source_database": "NEI2023_state48_speed_and_2022v2_StreetLight_temporal",
+  "source_database_url": "https://gaftp.epa.gov/Air/emismod/2022/v2/ancillary_data/",
+  "source_type_id": 32,
+  "source_type_label": "Light Commercial Truck",
+  "service_window": {
+    "local_time": "08:00-24:00",
+    "hour_ids": [
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19,
+      20,
+      21,
+      22,
+      23,
+      24
+    ],
+    "aggregation": "VMT_over_VHT_harmonic_effective_speed"
+  },
+  "low_flow_benchmark": {
+    "day_id": 2,
+    "day_type": "weekend",
+    "local_time": "06:00-10:00",
+    "hour_ids": [
+      7,
+      8,
+      9,
+      10
+    ],
+    "quantile": 0.85,
+    "aggregation": "VHT_weighted_speed_bin_quantile",
+    "fhwa_basis": "85th-percentile off-peak speed; weekend 06:00-10:00 low-flow window"
+  },
+  "default_data_scope": {
+    "avg_speed_distribution": "EPA statewide StreetLight COMM-MD source32 speed distribution; includes EPA gap filling",
+    "hour_vmt_fraction": "Uniform StreetLight statewide COMM-MD seven-day profiles, collapsed to two day types with 2023 monthly VMT weights"
+  },
+  "road_types": {
+    "urban_restricted_access": {
+      "road_type_id": 4,
+      "low_flow_q85_mph": 75.0,
+      "effective_speed_mph": {
+        "weekday": 55.330624512,
+        "weekend": 61.216718915
+      },
+      "speed_retention_factor": {
+        "weekday": 0.73774166,
+        "weekend": 0.816222919
+      }
+    },
+    "urban_unrestricted_access": {
+      "road_type_id": 5,
+      "low_flow_q85_mph": 40.0,
+      "effective_speed_mph": {
+        "weekday": 22.910216923,
+        "weekend": 23.370308068
+      },
+      "speed_retention_factor": {
+        "weekday": 0.572755423,
+        "weekend": 0.584257702
+      }
+    }
+  },
+  "state_fips": "48",
+  "state_abbreviation": "TX",
+  "observation_vintage": {
+    "speed_distribution": "StreetLight January2022-May2023",
+    "hour_day_distribution": "StreetLight November2022-May2023 after EPA commercial exclusions",
+    "annual_temporal_aggregation": "2023 NEI monthly source32 VMT"
+  },
+  "temporal_conversion": {
+    "definition": "Annual 2023 VMT-weighted representative weekday/weekend hour distributions reconstructed from public seven-day SMOKE fractions",
+    "formula": "q[s,r,d]=sum_m(VMT_2023[s,r,m,source32,all_fuels]*StreetLight_weekly_fraction[s,r,m,d]); hour_fraction[s,r,D,h]=sum_{d in D}(q[s,r,d]*StreetLight_hour_fraction[s,r,d,h])/sum_{d in D}q[s,r,d]",
+    "weekday": [
+      "MO",
+      "TU",
+      "WE",
+      "TH",
+      "FR"
+    ],
+    "weekend": [
+      "SA",
+      "SU"
+    ],
+    "monthly_weight_source": {
+      "url": "https://gaftp.epa.gov/Air/nei/2023/doc/supporting_data/onroad/2023NEI_onroad_activity_final_20251010.zip",
+      "archive_member": "2023NEI_onroad_activity_final_20251010/VMT_2023NEI_20250923_24sep2025_v0.csv",
+      "sha256": "cc92bda364288128b01022ec4c052db7513720a157ec73075cf44fd126213c85"
+    },
+    "calendar_count_multiplier": false,
+    "reason": "Weekly inputs already allocate month VMT across days; adding calendar counts would double count this allocation. Checked against matching NEI DayVMTFraction in CA/FL/IL/NY.",
+    "precision": "EPA SMOKE export uses normalized rounded input fractions (about four decimal places); these reconstructed annual profiles are not exact unpublished pre-override MOVES HourVMTFraction tables.",
+    "method_scope": "Only the statistical inputs and their documented temporal aggregation change. Source32, road4/5, 08-24 service window, weekend06-10 Q85, VMT/VHT effective speed and rho remain unchanged."
+  },
+  "profile_status": "frozen_generator_default_2026_10_26",
+  "source_inputs": {
+    "speed_distribution": {
+      "url": "https://gaftp.epa.gov/Air/nei/2023/doc/supporting_data/onroad/CDBs_for_all_counties/2023_CDBs_state48.zip",
+      "archive_member": "2023_CDBs_state48/c48001y2023_20250926/avgspeeddistribution.MYD",
+      "sha256": "9d51a1eaa011f7d27a4a04fc8e4d101101b82ac8cb34f2ef7bef38cc166f4ce3"
+    },
+    "hour_distribution": {
+      "url": "https://gaftp.epa.gov/Air/emismod/2022/v2/ancillary_data/temporal_ge_dat_2022he_24sep2025.zip",
+      "archive_member": "ge_dat/temporal/mtpro_hourly_onroad_MOVES_2022v2_01apr2025_v0",
+      "sha256": "6cc7aada76d4d3af8fa60e1768196369c38afc82544e3bdb987eb7dc5cf1beb1"
+    },
+    "weekly_distribution": {
+      "url": "https://gaftp.epa.gov/Air/emismod/2022/v2/ancillary_data/temporal_ge_dat_2022he_24sep2025.zip",
+      "archive_member": "ge_dat/temporal/mtpro_weekly_onroad_MOVES_2022v2_04apr2025_v0",
+      "sha256": "102cca46ad575c10d64582680093101b57ce177027cde055776e96c7bb66e041"
+    },
+    "monthly_vmt": {
+      "url": "https://gaftp.epa.gov/Air/nei/2023/doc/supporting_data/onroad/2023NEI_onroad_activity_final_20251010.zip",
+      "archive_member": "2023NEI_onroad_activity_final_20251010/VMT_2023NEI_20250923_24sep2025_v0.csv",
+      "sha256": "cc92bda364288128b01022ec4c052db7513720a157ec73075cf44fd126213c85"
+    }
+  },
+  "decision_date": "2026-10-26",
+  "statistics_release": {
+    "speed": "2023 NEI final county inputs, September 2025",
+    "hour_day": "EPA 2022v2 temporal archive September 2025, processed March-April 2025",
+    "documentation": "2023 NEI TSD and December 2025 2022v2 TSD",
+    "note": "Release/model year is distinct from observation vintage."
+  },
+  "reproduction": {
+    "canonical_sql": "inputs/TX.sql",
+    "sha256": "b32b5d59e489ba7e0c9933a4cf6cedc77588065de81845f1ca408002922b9e54",
+    "method": "evrptw_cle.moves_speed.derive_moves_speed_profile_from_sql",
+    "command": "PYTHONPATH=src python scripts/verify_state_speed_profiles.py"
+  }
+}

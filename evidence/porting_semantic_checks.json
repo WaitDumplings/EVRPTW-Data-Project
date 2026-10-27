@@ -1,0 +1,139 @@
+{
+  "passed": true,
+  "scope": "selected extracted core function ASTs; dataframe orchestration/resource-path changes separately tested",
+  "checks": [
+    {
+      "module": "road_tags.py",
+      "function": "_parse_multivalue",
+      "ast_identical_to_upstream": true,
+      "upstream_ast_sha256": "02af8f138f2645916bf2cf526be0336480d2f2f3fd06a01ac082adbaa96f0555",
+      "ported_ast_sha256": "02af8f138f2645916bf2cf526be0336480d2f2f3fd06a01ac082adbaa96f0555"
+    },
+    {
+      "module": "road_tags.py",
+      "function": "_as_bool",
+      "ast_identical_to_upstream": true,
+      "upstream_ast_sha256": "b4d3c0b0146e4be5e2ef2fde25495cd242794aad96f165b3021fd6d9dbcef73e",
+      "ported_ast_sha256": "b4d3c0b0146e4be5e2ef2fde25495cd242794aad96f165b3021fd6d9dbcef73e"
+    },
+    {
+      "module": "depot_candidates.py",
+      "function": "_text",
+      "ast_identical_to_upstream": true,
+      "upstream_ast_sha256": "a7e5b7237a4ee3d4733f49f513caf3855c49d6fc1127f88a0309de6fbc3fee1d",
+      "ported_ast_sha256": "a7e5b7237a4ee3d4733f49f513caf3855c49d6fc1127f88a0309de6fbc3fee1d"
+    },
+    {
+      "module": "depot_candidates.py",
+      "function": "_carrier",
+      "ast_identical_to_upstream": true,
+      "upstream_ast_sha256": "50ee8fe44a6221021304814611b249bee59dc34cafb2f871753624bd0a8f6385",
+      "ported_ast_sha256": "50ee8fe44a6221021304814611b249bee59dc34cafb2f871753624bd0a8f6385"
+    },
+    {
+      "module": "depot_candidates.py",
+      "function": "_candidate_tags",
+      "ast_identical_to_upstream": true,
+      "upstream_ast_sha256": "5d8c5b940aa914fb9c97fde48b09818cc13bfa7ad485273760652354972ba067",
+      "ported_ast_sha256": "5d8c5b940aa914fb9c97fde48b09818cc13bfa7ad485273760652354972ba067"
+    },
+    {
+      "module": "depot_candidates.py",
+      "function": "_is_matched_object",
+      "ast_identical_to_upstream": true,
+      "upstream_ast_sha256": "30daa43c494e8f84b2f21f4b9e57ac064edae8a7d52ea75a3b908de0b4b6071e",
+      "ported_ast_sha256": "30daa43c494e8f84b2f21f4b9e57ac064edae8a7d52ea75a3b908de0b4b6071e"
+    },
+    {
+      "module": "depot_candidates.py",
+      "function": "_evidence_tier",
+      "ast_identical_to_upstream": true,
+      "upstream_ast_sha256": "0b89f762ad5916733c0fd3f538e67f5a6e018e760ba9dff553f463ad2b702e11",
+      "ported_ast_sha256": "0b89f762ad5916733c0fd3f538e67f5a6e018e760ba9dff553f463ad2b702e11"
+    },
+    {
+      "module": "depot_candidates.py",
+      "function": "_function_signal",
+      "ast_identical_to_upstream": true,
+      "upstream_ast_sha256": "7dc7a850a9c2eff024737e3c5e759e99ccf741e41a05f5603ca60d8f490435c3",
+      "ported_ast_sha256": "7dc7a850a9c2eff024737e3c5e759e99ccf741e41a05f5603ca60d8f490435c3"
+    },
+    {
+      "module": "depot_candidates.py",
+      "function": "_address",
+      "ast_identical_to_upstream": true,
+      "upstream_ast_sha256": "20b5ae089388c67475e64587d69e707350e71d8500affbbb09bcea6dabb03485",
+      "ported_ast_sha256": "20b5ae089388c67475e64587d69e707350e71d8500affbbb09bcea6dabb03485"
+    },
+    {
+      "module": "depot_candidates.py",
+      "function": "_classify_candidates",
+      "ast_identical_to_upstream": true,
+      "upstream_ast_sha256": "3f47ba74a4e8a96af87fbcc5d6d7ad90d54ac66b29632d8255ae5f9f6bf8c7f5",
+      "ported_ast_sha256": "3f47ba74a4e8a96af87fbcc5d6d7ad90d54ac66b29632d8255ae5f9f6bf8c7f5"
+    },
+    {
+      "module": "depot_candidates.py",
+      "function": "_normalized_facility_text",
+      "ast_identical_to_upstream": true,
+      "upstream_ast_sha256": "e4ef15f70123b35415559c5440a6ee86a51eb17e9a53fec716dbaa1ccf7bd1d6",
+      "ported_ast_sha256": "e4ef15f70123b35415559c5440a6ee86a51eb17e9a53fec716dbaa1ccf7bd1d6"
+    },
+    {
+      "module": "depot_candidates.py",
+      "function": "_assign_legacy_facility_groups",
+      "ast_identical_to_upstream": true,
+      "upstream_ast_sha256": "129a4f7709e11e0226d6840cb402fa02b71e19f691de466b5783088bee6db669",
+      "ported_ast_sha256": "129a4f7709e11e0226d6840cb402fa02b71e19f691de466b5783088bee6db669"
+    },
+    {
+      "module": "depot_candidates.py",
+      "function": "_assign_facility_groups",
+      "ast_identical_to_upstream": true,
+      "upstream_ast_sha256": "14554ee63fda92ae0d5a9d8d473c022752d365d621cbd629636a913a54acc82a",
+      "ported_ast_sha256": "14554ee63fda92ae0d5a9d8d473c022752d365d621cbd629636a913a54acc82a"
+    },
+    {
+      "module": "depot_candidates.py",
+      "function": "build_public_depot_candidates",
+      "ast_identical_to_upstream": true,
+      "upstream_ast_sha256": "c8c9136cb7bd9ec0c03817c6ae129b3e83df87d6398609352c4823346ab29233",
+      "ported_ast_sha256": "c8c9136cb7bd9ec0c03817c6ae129b3e83df87d6398609352c4823346ab29233"
+    },
+    {
+      "module": "microsoft_composite.py",
+      "function": "exact_duplicates",
+      "ast_identical_to_upstream": true,
+      "upstream_ast_sha256": "5cd5c5501cadcb5d3e9402a0da0a77d7a26e1558781d91c3f007b9aa4751fe86",
+      "ported_ast_sha256": "5cd5c5501cadcb5d3e9402a0da0a77d7a26e1558781d91c3f007b9aa4751fe86"
+    },
+    {
+      "module": "microsoft_composite.py",
+      "function": "legacy_admission",
+      "ast_identical_to_upstream": true,
+      "upstream_ast_sha256": "7dc9f631e54244bc8ab23544baed088a364b2f63745c37730c457ec3ed15416d",
+      "ported_ast_sha256": "7dc9f631e54244bc8ab23544baed088a364b2f63745c37730c457ec3ed15416d"
+    },
+    {
+      "module": "nsi_evidence.py",
+      "function": "nsi_unit_interval",
+      "ast_identical_to_upstream": true,
+      "upstream_ast_sha256": "316ff73b0013230e5587d07c108899fa89b8c81d9daa7a0b9a7f3e389b80d942",
+      "ported_ast_sha256": "316ff73b0013230e5587d07c108899fa89b8c81d9daa7a0b9a7f3e389b80d942"
+    },
+    {
+      "module": "customer_spatial.py",
+      "function": "residential_unit_band",
+      "ast_identical_to_upstream": true,
+      "upstream_ast_sha256": "3bf8bd3a1bcf0a31a81295ceac088eadc4363d127c8d967f2f999fcb016f2795",
+      "ported_ast_sha256": "3bf8bd3a1bcf0a31a81295ceac088eadc4363d127c8d967f2f999fcb016f2795"
+    },
+    {
+      "module": "customer_spatial.py",
+      "function": "resolve_containment_matches",
+      "ast_identical_to_upstream": true,
+      "upstream_ast_sha256": "f1a3d092a45e30de761c293222595ec74e929b024c577625ade5b965343ae92d",
+      "ported_ast_sha256": "f1a3d092a45e30de761c293222595ec74e929b024c577625ade5b965343ae92d"
+    }
+  ]
+}

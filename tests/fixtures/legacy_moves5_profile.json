@@ -1,0 +1,53 @@
+{
+  "schema": "evrptw_moves5_speed_retention_profile_v1",
+  "profile_id": "us_epa_moves5_20241112_source32_static_08_24_v1",
+  "source_model": "U.S. EPA Motor Vehicle Emission Simulator (MOVES5)",
+  "source_database": "movesdb20241112",
+  "source_database_url": "https://github.com/USEPA/EPA_MOVES_Model/blob/master/database/Setup/movesdb20241112.zip",
+  "source_type_id": 32,
+  "source_type_label": "Light Commercial Truck",
+  "service_window": {
+    "local_time": "08:00-24:00",
+    "hour_ids": [9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24],
+    "aggregation": "VMT_over_VHT_harmonic_effective_speed"
+  },
+  "low_flow_benchmark": {
+    "day_id": 2,
+    "day_type": "weekend",
+    "local_time": "06:00-10:00",
+    "hour_ids": [7, 8, 9, 10],
+    "quantile": 0.85,
+    "aggregation": "VHT_weighted_speed_bin_quantile",
+    "fhwa_basis": "85th-percentile off-peak speed; weekend 06:00-10:00 low-flow window"
+  },
+  "default_data_scope": {
+    "avg_speed_distribution": "single national default by source/road/day/hour",
+    "hour_vmt_fraction": "national temporal allocation; not edge traffic volume and not EDV-specific"
+  },
+  "road_types": {
+    "urban_restricted_access": {
+      "road_type_id": 4,
+      "low_flow_q85_mph": 70.0,
+      "effective_speed_mph": {
+        "weekday": 53.115367211,
+        "weekend": 58.90191182
+      },
+      "speed_retention_factor": {
+        "weekday": 0.75879096,
+        "weekend": 0.841455883
+      }
+    },
+    "urban_unrestricted_access": {
+      "road_type_id": 5,
+      "low_flow_q85_mph": 45.0,
+      "effective_speed_mph": {
+        "weekday": 24.527660663,
+        "weekend": 25.383511147
+      },
+      "speed_retention_factor": {
+        "weekday": 0.545059126,
+        "weekend": 0.564078025
+      }
+    }
+  }
+}
