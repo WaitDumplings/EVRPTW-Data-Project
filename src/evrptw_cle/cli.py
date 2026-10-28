@@ -1,4 +1,4 @@
-"""Entry points for reviewed geographic components; no full CLE/instance command."""
+"""Build and read Stage 1 city logistics environments from local source bundles."""
 
 from __future__ import annotations
 
@@ -7,6 +7,7 @@ import gc
 import json
 from pathlib import Path
 
+from .context_validation import validate_context_bindings
 from .runtime_paths import CONFIG_ROOT
 from .util import sha256_file, write_json
 
@@ -42,11 +43,10 @@ def validate_inputs(registry_path):
     )
 
 
-def require_current_context(path):
+def require_current_context(path, **bindings):
     path = Path(path)
     manifest = json.loads((path / "access_context_manifest.json").read_text())
-    if manifest["policy"] != "delivery_terminal_access_v2":
-        raise ValueError("The reviewed delivery-purpose access context is required")
+    validate_context_bindings(manifest, **bindings)
     return manifest
 
 
@@ -104,7 +104,13 @@ def depots(args):
     from .local_road_access import LocalAccessContext
     from .protected_connectivity import build_directed_component_index
 
-    manifest = require_current_context(args.context)
+    manifest = require_current_context(
+        args.context,
+        city_slug=args.city,
+        boundary_path=args.boundary,
+        mask_path=args.masks,
+        area_crs=args.area_crs,
+    )
     provenance = json.loads(args.source_manifest.read_text())
     if provenance["pbf_sha256"] != manifest["source"]["pbf_sha256"]:
         raise ValueError("Depot and road OSM snapshots differ")
@@ -133,6 +139,7 @@ def depots(args):
         args.area_crs,
         masks=masks,
         access_context=context,
+        footprints=gpd.read_parquet(args.footprints) if getattr(args, "footprints", None) else None,
     )
     args.output.mkdir(parents=True, exist_ok=True)
     path = args.output / "depots.parquet"
@@ -141,6 +148,17 @@ def depots(args):
         city=args.city,
         policy=manifest["policy"],
         source_sha256=sha256_file(args.raw_depots),
+        building_obstacles=dict(path=str(args.footprints.resolve()),sha256=sha256_file(args.footprints)) if getattr(args,"footprints",None) else None,
+        source_provenance=provenance,
+        boundary_sha256=sha256_file(args.boundary),
+        mask_sha256=sha256_file(args.masks),
+        generation_dependencies={
+            name: sha256_file(Path(__file__).with_name(name)) for name in [
+                "cli.py", "facilities.py", "depot_candidates.py", "depot_grouping.py",
+                "delivery_access.py", "frontage.py", "local_road_access.py", "customer_access.py",
+                "terminal_access.py", "public_locations.py",
+            ]
+        },
         context_sha256=sha256_file(args.context / "access_context_manifest.json"),
         output_sha256=sha256_file(path),
         grouping=grouping,
@@ -160,8 +178,24 @@ def depots(args):
 
 def main(argv=None):
     p = argparse.ArgumentParser(description=__doc__)
-    sub = p.add_subparsers(dest="command", required=True)
-    sub.add_parser("status", help="Show reviewed scope and remaining freeze gates")
+    sub = p.add_subparsers(dest="command")
+    init = sub.add_parser("init", help="Create a project.json and local input folder")
+    init.add_argument("directory", type=Path)
+    for name, help_text in [("plan", "List required inputs and selected cities without building"),
+                            ("build", "Build complete CLEs; resume unchanged components")]:
+        command = sub.add_parser(name, help=help_text)
+        command.add_argument("config", type=Path)
+        command.add_argument("--cities", nargs="+", help="Override the city selection in project.json")
+        if name == "plan":
+            command.add_argument("--json", action="store_true")
+        else:
+            command.add_argument("--no-verify", action="store_true", help="Defer final data validation to the verify command")
+    check = sub.add_parser("verify", help="Independently validate a built CLE cohort")
+    check.add_argument("output", type=Path)
+    inspect = sub.add_parser("inspect", help="Show location counts and saved certificate status")
+    inspect.add_argument("output", type=Path)
+    inspect.add_argument("--json", action="store_true")
+    sub.add_parser("status", help="Show supported capabilities")
     v = sub.add_parser("validate-inputs", help="Verify archived customer source files")
     v.add_argument("registry", type=Path)
     r = sub.add_parser(
@@ -178,10 +212,55 @@ def main(argv=None):
     d = sub.add_parser("depots", help="Construct unique cross-operator departure locations")
     d.add_argument("--city", required=True)
     d.add_argument("--area-crs", required=True)
+    d.add_argument("--footprints", type=Path, required=True)
     for name in ["raw-depots", "source-manifest", "boundary", "masks", "context", "output"]:
         d.add_argument("--" + name, type=Path, required=True)
     args = p.parse_args(argv)
-    if args.command == "status":
+    if args.command is None:
+        p.print_help()
+    elif args.command in ["init", "plan", "build", "verify", "inspect"]:
+        from .workflow import build_project, initialize, inspect_output, plan_project, verify_output
+
+        try:
+            if args.command == "init":
+                path = initialize(args.directory)
+                print(f"Created {path}\nAdd your local source bundle, then run:\n  evrptw-data plan {path}")
+            elif args.command == "plan":
+                plan = plan_project(args.config, args.cities)
+                if args.json:
+                    print(json.dumps({k: v for k, v in plan.items() if k != "inventory"}, default=str, indent=2))
+                else:
+                    print("Input status: " + ("ready" if plan["ready"] else "not ready"))
+                    print("Cities: " + (", ".join(plan["cities"]) or "not available yet"))
+                    print("Output: " + str(plan["output"]))
+                    for issue in plan["issues"]:
+                        print("  - " + issue)
+                    if plan["ready"]:
+                        print("Build: source preparation (if needed) -> roads -> locations and speeds -> CLE -> data validation")
+                if not plan["ready"]:
+                    raise SystemExit(2)
+            elif args.command == "build":
+                output = build_project(args.config, args.cities, verify=not args.no_verify)
+                print(f"Build complete: {output}\nView counts: evrptw-data inspect {output}")
+            elif args.command == "verify":
+                result = verify_output(args.output)
+                print(f"Data validation passed: {result['city_count']} cities")
+            else:
+                report = inspect_output(args.output)
+                if args.json:
+                    print(json.dumps(report, indent=2))
+                else:
+                    print(f"CLEs: {report['output']}")
+                    print(f"{'City':<18} {'Customer':>12} {'Depot':>8} {'Charging':>10} {'Certificate':>12}")
+                    for row in report["cities"]:
+                        summary = row["summary"]
+                        print(f"{row['city']:<18} {summary['customer']['available']:>12,} "
+                              f"{summary['depot']['available']:>8,} {summary['charging']['available']:>10,} "
+                              f"{'passed' if row['verified'] else 'missing':>12}")
+                    print("Counts show eligible potential locations. No instance activation is performed.")
+        except (ValueError, OSError, RuntimeError, KeyError) as error:
+            p.error(str(error))
+    elif args.command == "status":
         print((CONFIG_ROOT / "project_status.json").read_text())
     elif args.command == "validate-inputs":
         result = validate_inputs(args.registry)

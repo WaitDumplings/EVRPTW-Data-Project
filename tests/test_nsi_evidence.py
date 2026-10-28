@@ -62,3 +62,49 @@ def test_legacy_fill_cannot_break_a_unique_new_primary_match():
 def test_empty_frozen_query_reports_zero_without_invented_records():
     points, audit = residential_points([], boundary=box(0, 0, 1, 1))
     assert points.empty and audit["ordinary_residential_points"] == 0
+
+
+def native_feature():
+    return {
+        "properties": dict(
+            fd_id=1,
+            bid=1,
+            occtype="RES3B",
+            resunits=4,
+            ftprntsqft=100,
+            usastrucid=0,
+            ftprntid=1,
+            ftprntsrc="test",
+            cbfips="00100",
+        ),
+        "geometry": {"type": "Point", "coordinates": [2, 2]},
+    }
+
+
+@pytest.mark.parametrize("field", ["resunits", "occtype", "ftprntid", "coordinates"])
+def test_conflicting_duplicate_source_identity_fails_in_either_order(field):
+    from copy import deepcopy
+
+    first = native_feature()
+    second = deepcopy(first)
+    if field == "coordinates":
+        second["geometry"][field] = [3, 2]
+    else:
+        second["properties"][field] = {"resunits": 20, "occtype": "RES6", "ftprntid": 2}[field]
+    for features in ([first, second], [second, first]):
+        with pytest.raises(ValueError, match="Conflicting duplicate NSI.*" + field):
+            residential_points(features, boundary=box(0, 0, 5, 5))
+
+
+def test_duplicate_native_evidence_ignores_unconsumed_api_metadata():
+    from copy import deepcopy
+
+    first = native_feature()
+    second = deepcopy(first)
+    second["properties"]["unconsumed_api_metadata"] = "different response page"
+    frames = []
+    for features in ([first, second], [second, first]):
+        points, audit = residential_points(features, boundary=box(0, 0, 5, 5))
+        assert audit["duplicate_records_removed"] == 1
+        frames.append(points)
+    pd.testing.assert_frame_equal(*frames)

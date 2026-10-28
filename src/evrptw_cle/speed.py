@@ -278,7 +278,7 @@ def build_legal_speed_layer(
         state_fips=state_fips,
     )
     moves_profile = load_moves_speed_profile(moves_profile_path)
-    graph = ox.load_graphml(graph_path)
+    graph = ox.load_graphml(graph_path, node_dtypes={"osmid": str}, edge_dtypes={"osmid": str})
     hpms_evidence = _load_hpms_edge_evidence(hpms_edge_evidence_path)
     graph_edge_ids = {f"{u}:{v}:{key}" for u, v, key in graph.edges(keys=True)}
     stale_hpms_edges = sorted(set(hpms_evidence) - graph_edge_ids)

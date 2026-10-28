@@ -1,0 +1,41 @@
+{
+  "schema": "evrptw_cle_schema_v1",
+  "scope": "Persistent city logistics environment before operating-day activation; internal freeze only",
+  "location_unit": "One independent/provisional house site, one source-identified apartment complex, one depot spatial group, or one AFDC charging location",
+  "canonical_location_key": "location_type + ':' + source_location_id",
+  "road_layers": [
+    "public",
+    "delivery_terminal",
+    "charging_terminal"
+  ],
+  "terminal_ownership": "Only selected origin egress and destination ingress may be materialized; no terminal through-routing",
+  "source_edge_key": [
+    "edge_u",
+    "edge_v",
+    "edge_key"
+  ],
+  "length_units": "metres",
+  "speed_units": "km/h",
+  "time_units": "seconds",
+  "cost_layers": [
+    "legal",
+    "reference_weekday",
+    "reference_weekend"
+  ],
+  "connector_cost": "Retain geometric length and time_s_per_inverse_kph=3.6*length_m. Vehicle/scenario connector speed is a Stage2 input; no test speed is frozen as observed data.",
+  "residential_units": "Nullable auxiliary source-supported estimate, separate from location count, daily customers, packages and realized demand",
+  "scope_ambiguity": "Preserve sources, clear uncertain operational unit estimates, mark pending under the same source-owner rule in every city; no manual merges",
+  "eligibility": "Stage1 eligibility is a source/access/parameter gate; it is not an activated customer or station",
+  "unknown_access": "Retained pending, with explicit reason; no arbitrary 1km deletion",
+  "reference_vehicle": "Charging compatibility/caps are an explicit reference profile; all native member/configuration evidence remains available",
+  "provenance": "Frozen input archive, source/code/policy/output hashes, relative component file map and independent saved-file verification",
+  "outside_scope": [
+    "instance activation",
+    "daily demand",
+    "time windows",
+    "service times",
+    "fleet sampling",
+    "solver runs",
+    "public distribution"
+  ]
+}

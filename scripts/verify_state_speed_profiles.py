@@ -42,7 +42,8 @@ def verify_profiles(registry_path: Path = DEFAULT_MOVES_SPEED_PROFILE_PATH) -> d
     for city, state in registry["city_state_fips"].items():
         path = resolve_moves_speed_profile(registry_path, city_slug=city, state_fips=state)
         cities[city] = load_moves_speed_profile(path)["profile_id"]
-    return {"passed": True, "states": records, "cities": cities}
+    return {"passed": True, "states": records, "cities": cities,
+            "verifier_sha256":hashlib.sha256(Path(__file__).read_bytes()).hexdigest()}
 
 
 def main() -> None:

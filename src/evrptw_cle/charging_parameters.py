@@ -190,37 +190,29 @@ def select_reference_configurations(locations, members, units, medians):
     result["selected_configuration_id"] = ""
     result["station_power_kw"] = np.nan
     result["station_power_status"] = "no_native_compatible_configuration"
-    result["reference_vehicle_class_status"] = np.where(
-        result["Maximum Vehicle Class"].fillna("").isin(["LD", "MD", "HD"]),
-        "weight_category_not_excluded",
-        "unknown",
-    )
-    source = members.set_index("ID")
+    source = members.set_index("ID", drop=False)
     selection = chosen.set_index("charging_location_id")
+    # Rebinding a representative must carry the complete selected source row:
+    # raw equipment, access metadata and source IDs must agree with its normalized
+    # fields. These fields belong to the collapsed location rather than a member.
+    location_fields = {
+        "charger_id",
+        "charging_location_id",
+        "charging_location_policy",
+        "charging_site_address_key",
+        "charger_candidate_eligible",
+        "source_member_count",
+        "source_afdc_ids_json",
+        "eligible_afdc_ids_json",
+        "equipment_access_members_json",
+        "port_count_scope",
+        "location_total_ports",
+    }
     for idx, row in result.loc[result.reference_vehicle_eligible].iterrows():
         cfg = selection.loc[row.charging_location_id]
         member = source.loc[int(cfg.afdc_id)]
-        for field in [
-            "ID",
-            "source_charger_id",
-            "reference_charge_mode",
-            "reference_vehicle_connector_compatibility",
-            "has_ccs1",
-            "has_j1772",
-            "has_nacs",
-            "has_chademo",
-            "l1_ports",
-            "l2_ports",
-            "dc_fast_ports",
-            "Access Code",
-            "Access Detail Code",
-            "Access Days Time",
-            "Restricted Access",
-            "Maximum Vehicle Class",
-            "EV Pricing",
-            "EV Network",
-        ]:
-            if field in member:
+        for field in member.index:
+            if field not in location_fields:
                 result.at[idx, field] = member[field]
         result.at[idx, "reference_charge_mode"] = cfg.reference_charge_mode
         result.at[idx, "reference_vehicle_connector_compatibility"] = (
@@ -233,6 +225,11 @@ def select_reference_configurations(locations, members, units, medians):
         result.at[idx, "selected_configuration_id"] = (
             f"afdc_{int(cfg.afdc_id)}:unit_{int(cfg.unit_source_row)}:{cfg.connector}"
         )
+    result["reference_vehicle_class_status"] = np.where(
+        result["Maximum Vehicle Class"].fillna("").isin(["LD", "MD", "HD"]),
+        "weight_category_not_excluded",
+        "unknown",
+    )
     for field in ["assigned_power_kw", "vehicle_cap_kw", "capped_pre_derating_kw", "power_qa_flag"]:
         result[field] = result.charging_location_id.map(selection[field])
     result["charging_parameter_eligible"] = (

@@ -9,8 +9,9 @@ from evrptw_cle.cli import main, require_current_context, validate_inputs
 def test_cli_stops_before_unfrozen_CLE_and_activation(capsys):
     main(["status"])
     status = json.loads(capsys.readouterr().out)
-    assert status["customer_depot_location_components_frozen"]
-    assert not status["cle_structure_frozen"]
+    assert status["stage"] == 1
+    assert status["cle_construction_available"]
+    assert not status["data_bundled"]
     assert not status["instance_activation_included"]
     with pytest.raises(SystemExit) as error:
         main(["activate"])

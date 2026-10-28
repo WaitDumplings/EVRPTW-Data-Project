@@ -13,6 +13,7 @@ import osmnx as ox
 import pandas as pd
 import shapely
 
+from .context_validation import validate_context_bindings
 from .customer_access import (
     _threshold_summary,
     _write_service_access_contract,
@@ -28,6 +29,7 @@ from .protected_connectivity import (
 from .public_locations import filter_public_locations
 from .residential_identity import source_groups
 from .residential_types import TYPE_ORDER, classify_nsi_occtypes, nsi_occtype_type
+from .site_scope_audit import SCOPE_POLICY, annotate_site_scope, apply_site_scope_eligibility
 from .util import sha256_file, write_json
 
 SITE_POLICY = "identified_residential_site_v3"
@@ -43,6 +45,20 @@ def validate_site_tables(sites, members):
         errors.append("Customer site identities must be unique and canonical")
     if members.fd_id.duplicated().any():
         errors.append("NSI source records have duplicate site owners")
+    component_owners = members.groupby("nsi_component_id").site_id.nunique()
+    cross_components = component_owners.index[component_owners.gt(1)]
+    cross_members = members.nsi_component_id.isin(cross_components)
+    if members.loc[cross_members, "operational_units_counted"].any():
+        errors.append("A source component crossing site owners has operational units")
+    pending = sites.get("site_scope_review_required", pd.Series(False, index=sites.index))
+    pending_ids = set(sites.loc[pending, "site_id"])
+    if not set(members.loc[cross_members, "site_id"]).issubset(pending_ids):
+        errors.append("A source component crossing site owners lacks a scope review flag")
+    if sites.loc[pending, "residential_units"].notna().any():
+        errors.append("A site with unresolved owner scope has an operational unit estimate")
+    for field in ["cle_candidate_eligible", "cle_default_instance_eligible"]:
+        if field in sites and sites.loc[pending, field].any():
+            errors.append("A site with unresolved owner scope is default eligible")
     if set(members.site_id) != set(sites.site_id):
         errors.append("Residential-site membership and parent tables differ")
     units = pd.to_numeric(sites.residential_units, errors="coerce")
@@ -82,10 +98,6 @@ def build_registered_site_layer(
     """Build from versioned inputs, or reuse only a complete hash-matched layer."""
     registry_path = Path(registry_path).resolve()
     context_manifest = Path(graph_path).parent / "access_context_manifest.json"
-    if access_context is None and context_manifest.is_file():
-        from .local_road_access import LocalAccessContext
-
-        access_context = LocalAccessContext.load(context_manifest.parent)
     registry = json.loads(registry_path.read_text())
     if registry.get("policy") != SITE_POLICY:
         raise ValueError("Customer registry does not use the current site policy")
@@ -103,6 +115,19 @@ def build_registered_site_layer(
         path = source_root / record["path"]
         if not path.is_file() or sha256_file(path) != record["sha256"]:
             raise ValueError("Missing or changed frozen customer provenance: " + name)
+    if context_manifest.is_file():
+        manifest = json.loads(context_manifest.read_text())
+        validate_context_bindings(
+            manifest,
+            city_slug=city_slug,
+            boundary_path=boundary_path,
+            mask_path=sources["public_masks"],
+            area_crs=entry["area_crs"],
+        )
+        if access_context is None:
+            from .local_road_access import LocalAccessContext
+
+            access_context = LocalAccessContext.load(context_manifest.parent)
     expected = {
         **{name: record["sha256"] for name, record in entry["sources"].items()},
         "boundary": entry["boundary_sha256"],
@@ -266,6 +291,7 @@ def infer_residential_sites(
     boundary,
     masks=None,
     area_crs="EPSG:32618",
+    return_scope_audit=False,
 ):
     """Infer one identity per explicit complex or provisional independent site.
 
@@ -458,18 +484,22 @@ def infer_residential_sites(
     owner = sites.set_index("site_source_key").site_id
     x["site_id"] = x._site_key.map(owner)
     x = x.loc[x.site_id.notna()].copy()
-    ownership = x[
-        [
-            "fd_id",
-            "site_id",
-            "_component",
-            "composite_building_id",
-            "_osm_id",
-            "occtype",
-            "resunits",
-            "modeled_units",
-        ]
-    ].rename(columns={"_component": "nsi_component_id", "_osm_id": "osm_building_id"})
+    ownership_columns = [
+        "fd_id",
+        "site_id",
+        "_component",
+        "composite_building_id",
+        "_osm_id",
+        "occtype",
+        "resunits",
+        "modeled_units",
+    ]
+    ownership_columns += [
+        name for name in ["bid", "ftprntsrc", "ftprntid", "usastrucid", "cbfips"] if name in x
+    ]
+    ownership = x[ownership_columns].rename(
+        columns={"_component": "nsi_component_id", "_osm_id": "osm_building_id"}
+    )
     # A unit estimate has exactly one canonical owner row. Duplicate NSI source
     # records remain inspectable without becoming additional households.
     known_sites = set(sites.loc[sites.residential_units.notna(), "site_id"])
@@ -483,7 +513,10 @@ def infer_residential_sites(
         .where(ownership.operational_units_counted)
         .astype("Float64")
     )
-    return (
+    sites, ownership, scope_ledger, scope_report = annotate_site_scope(
+        sites, ownership, osm_buildings=buildings, complexes=complexes, area_crs=area_crs
+    )
+    result = (
         sites,
         ownership,
         {
@@ -500,7 +533,10 @@ def infer_residential_sites(
                 sites.site_identity_source.eq("osm_explicit_residential_complex").sum()
             ),
             "site_scope_unresolved_count": int(sites.site_scope_unresolved.sum()),
-            "ambiguous_complex_scope_sites": int(sites.site_scope_ambiguous.sum()),
+            "ambiguous_complex_scope_sites": int(sites.site_complex_boundary_ambiguous.sum()),
+            "site_scope_review_required_count": int(sites.site_scope_review_required.sum()),
+            "site_scope_policy": SCOPE_POLICY,
+            "site_scope_audit": scope_report,
             "known_residential_units_sites": int(sites.residential_units.notna().sum()),
             "known_residential_units_sum": float(sites.residential_units.sum()),
             "modeled_source_unit_sum": float(sites.nsi_modeled_unit_source_sum.sum()),
@@ -508,6 +544,7 @@ def infer_residential_sites(
             "unit_policy": "source component estimates counted once; uncertainty stays null; raw NSI unit mass is separate",
         },
     )
+    return (*result, scope_ledger) if return_scope_audit else result
 
 
 def build_residential_site_layer(
@@ -533,7 +570,7 @@ def build_residential_site_layer(
     output_dir.mkdir(parents=True, exist_ok=True)
     boundary = gpd.read_file(boundary_path).to_crs(4326).geometry.union_all()
     masks = load_exclusion_masks(mask_path)
-    sites, members, summary = infer_residential_sites(
+    sites, members, summary, scope_ledger = infer_residential_sites(
         gpd.read_parquet(records_path),
         gpd.read_parquet(footprints_path),
         gpd.read_parquet(osm_buildings_path),
@@ -542,6 +579,7 @@ def build_residential_site_layer(
         boundary=boundary,
         masks=masks,
         area_crs=area_crs,
+        return_scope_audit=True,
     )
     sites.to_parquet(output_dir / "residential_sites.parquet", index=False)
     if graph is None and access_context is not None:
@@ -579,18 +617,26 @@ def build_residential_site_layer(
     anchored["geometry_rule_candidate_eligible"] = True
     anchored["geometry_core_eligible"] = True
     anchored["road_access_candidate_eligible"] = anchored.protected_roundtrip_eligible.astype(bool)
-    anchored["cle_candidate_eligible"] = anchored.road_access_candidate_eligible
-    anchored["cle_default_instance_eligible"] = anchored.cle_candidate_eligible
+    anchored = apply_site_scope_eligibility(anchored)
     anchored["road_access_distance_qa_flag"] = anchored.road_access_distance_m.gt(200)
     anchored["quarantine_reason"] = (
         anchored.access_review_reason
         if access_context is not None
         else np.where(anchored.cle_candidate_eligible, "", "outside_reference_directed_scc")
     )
+    pending_scope = anchored.site_scope_review_required
+    anchored.loc[pending_scope, "quarantine_reason"] = [
+        "|".join(filter(None, [str(access), "site_scope:" + str(scope)]))
+        for access, scope in zip(
+            anchored.loc[pending_scope, "quarantine_reason"],
+            anchored.loc[pending_scope, "site_scope_review_reason"],
+        )
+    ]
     members = members.loc[members.site_id.isin(anchored.site_id)].copy()
     anchored.to_parquet(output_dir / "footprint_road_access_candidates.parquet", index=False)
     anchored.to_parquet(output_dir / "latent_locations.parquet", index=False)
     members.to_parquet(output_dir / "residential_site_members.parquet", index=False)
+    scope_ledger.to_csv(output_dir / "site_scope_ambiguity_candidates.csv", index=False)
     extents = sites.loc[sites.site_id.isin(anchored.site_id)]
     verification = validate_site_tables(anchored, members)
     extents.to_parquet(output_dir / "residential_sites.parquet", index=False)
@@ -607,13 +653,16 @@ def build_residential_site_layer(
                 "residential_sites.py",
                 "road_tags.py",
                 "runtime_paths.py",
+                "context_validation.py",
                 "residential_identity.py",
                 "residential_types.py",
+                "site_scope_audit.py",
                 "customer_spatial.py",
                 "customer_access.py",
                 "public_locations.py",
                 "local_road_access.py",
                 "delivery_access.py",
+                "frontage.py",
                 "terminal_access.py",
                 "protected_connectivity.py",
             ]
@@ -635,6 +684,15 @@ def build_residential_site_layer(
             "road_anchor_public_filter": anchor_filter,
             "retained_sites_after_road_anchor": len(anchored),
             "road_available_sites": int(anchored.cle_candidate_eligible.sum()),
+            "road_accessible_sites_before_scope_guard": int(
+                anchored.road_access_candidate_eligible.sum()
+            ),
+            "scope_pending_with_road_access": int(
+                (
+                    anchored.site_scope_review_required & anchored.road_access_candidate_eligible
+                ).sum()
+            ),
+            "cle_available_sites": int(anchored.cle_candidate_eligible.sum()),
             "known_units_available_sites": int(
                 anchored.loc[anchored.cle_candidate_eligible, "residential_units"].notna().sum()
             ),
@@ -648,6 +706,7 @@ def build_residential_site_layer(
             "residential_sites": "residential_sites.parquet",
             "latent_locations": "latent_locations.parquet",
             "residential_site_members": "residential_site_members.parquet",
+            "site_scope_ambiguity_candidates": "site_scope_ambiguity_candidates.csv",
             **{k: Path(v).name for k, v in access["paths"].items()},
         },
     }

@@ -60,18 +60,19 @@ def test_private_gate_is_distinct_from_motor_no_and_locked(tmp_path):
         assert not result.motor_access_allowed.iloc[0]
 
 
-def test_case_review_hold_keeps_source_but_never_admits_la_point():
+def test_source_id_alone_does_not_change_access():
     c = authorized_context()
     x = locations()
     x["latent_service_location_id"] = "cus_site_los-angeles_e11a978cb54f39b269df"
     r = c.anchor(x).iloc[0]
-    assert r.access_case_review_hold and not r.local_access_confirmed
-    assert r.access_review_reason == "review_hold_unverified_motor_access"
+    assert r.local_access_confirmed
+    assert not r.unsupported_frontage_nearer
     assert r.geometry.equals(x.geometry.iloc[0])
 
 
-def test_saved_context_preserves_private_authorization_and_holds(tmp_path):
-    from evrptw_cle.delivery_access import HOLDS_PATH, POLICY
+def test_saved_context_preserves_private_authorization_and_frontage_policy(tmp_path):
+    from evrptw_cle.delivery_access import POLICY
+    from evrptw_cle.frontage import FRONTAGE_PATH
     from evrptw_cle.local_road_access import LocalAccessContext
 
     c = authorized_context()
@@ -81,7 +82,7 @@ def test_saved_context_preserves_private_authorization_and_holds(tmp_path):
     manifest = dict(
         policy=POLICY,
         area_crs="EPSG:3857",
-        review_holds_sha256=sha256_file(HOLDS_PATH),
+        frontage_contract_sha256=sha256_file(FRONTAGE_PATH),
         outputs={p.name: sha256_file(p) for p in tmp_path.iterdir() if p.is_file()},
     )
     (tmp_path / "access_context_manifest.json").write_text(json.dumps(manifest))

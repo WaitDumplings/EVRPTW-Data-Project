@@ -1,57 +1,59 @@
 {
-  "schema": "evrptw_charging_location_contract_v1",
+  "acceptance_authority": "stage1_freeze.json; static historical counts are not current acceptance flags",
   "accepted_date": "2026-10-26",
-  "status": "methodology_frozen_generator_integrated_11city_facility_recompute_verified",
-  "coordinate_policy": "afdc_native_gps_point_address_aux_v3",
-  "location_policy": "afdc_shared_coordinate_complete_address_v1",
-  "snapshot_registry": "afdc_snapshot_20261026.json",
   "coordinate_admission": {
-    "GPS_or_200_9_Point": "valid finite native longitude/latitude accepted independently; precision labels are source evidence, not field verification",
     "200_8_Address": "native coordinate retained; current matched Census input address bound to AFDC snapshot and address anchor within 250 m required",
-    "osm_same_address": "QA evidence only; does not replace AFDC native coordinates",
-    "manual_override": "valid coordinates and documented review note required"
+    "GPS_or_200_9_Point": "valid finite native longitude/latitude accepted independently; precision labels are source evidence, not field verification",
+    "manual_override": "disabled; no per-record coordinate override tables",
+    "osm_same_address": "QA evidence only; does not replace AFDC native coordinates"
+  },
+  "coordinate_policy": "afdc_native_gps_point_address_aux_v3",
+  "equipment_and_access": {
+    "location_summary": "equipment_access_members_json and eligible_afdc_ids_json remain source-attributable",
+    "members": "charging_members.parquet preserves safe original source rows, connector/port counts, access restrictions, hours, pricing and networks",
+    "port_counts": "never sum across source records without EVSE identities; scalar fields describe one eligible representative source",
+    "restricted_or_contradictory_member": "not eligible; a clean independently eligible member can support the location"
+  },
+  "historical_upstream_reference": {
+    "artifact_check_count": 198,
+    "artifact_root": "output/charging_location_freeze_20261026 (workspace root)",
+    "available_location_count": 5694,
+    "city_count": 11,
+    "parameter_review_status": "frozen_under_charging_parameter_contract_v1; current_road_access_rebind_pending"
   },
   "location_identity": {
     "merge": "identical native AFDC coordinate plus complete normalized street/state/ZIP5",
     "same_address_distinct_native_points": "retain separate locations; same address alone does not prove a shared charging position",
     "same_coordinate_conflicting_or_incomplete_addresses": "quarantine all colliding source records",
-    "stable_id": "SHA256 of native coordinate and normalized address; unknown-address singleton includes AFDC ID",
-    "sampling_unit": "one row per charging_location_id in chargers.parquet"
+    "sampling_unit": "one row per charging_location_id in chargers.parquet",
+    "stable_id": "SHA256 of native coordinate and normalized address; unknown-address singleton includes AFDC ID"
   },
-  "equipment_and_access": {
-    "members": "charging_members.parquet preserves safe original source rows, connector/port counts, access restrictions, hours, pricing and networks",
-    "location_summary": "equipment_access_members_json and eligible_afdc_ids_json remain source-attributable",
-    "port_counts": "never sum across source records without EVSE identities; scalar fields describe one eligible representative source",
-    "restricted_or_contradictory_member": "not eligible; a clean independently eligible member can support the location"
-  },
+  "location_policy": "afdc_shared_coordinate_complete_address_v1",
+  "public_location_policy": "public_location_exclusions_v1",
   "quarantine": [
     "same coordinate with conflicting/incomplete addresses",
     "explicit removed/unavailable status or private-only access contradicting public E flag",
     "structured title/address number conflict",
-    "native/address coordinate not admitted",
-    "unverified road connector longer than 1000 m"
+    "native/address coordinate not admitted"
   ],
   "road_access": {
-    "method": "nearest eligible physical operational edge, excluding motorway/trunk under shared access policy; directed projection offsets retained",
-    "roundtrip": "reference largest directed SCC in both directions",
     "distance_qa_m": 250,
-    "unverified_access_quarantine_m": 1000,
-    "threshold_semantics": "conservative engineering QA limit, not a claim that every longer connector or source coordinate is wrong"
+    "frontage_contract": "delivery_frontage_contract_v1.json",
+    "method": "native point to complete physical inventory on the common October graph; charging-purpose permission and source-frontage guard",
+    "numeric_distance_exclusion": false,
+    "permission": "public charging cannot inherit invited-delivery authorization",
+    "roundtrip": "reference largest directed SCC in both directions",
+    "threshold_semantics": "distance QA only; retain source-safe unresolved rows outside default eligibility"
   },
-  "public_location_policy": "public_location_exclusions_v1",
+  "schema": "evrptw_charging_location_contract_v1",
+  "scope_limit": "potential charging locations only; connector/vehicle applicability, power, hours and queues remain separate parameter/model review; whole-CLE release not asserted",
   "snapshot_dates": {
     "AFDC_retrieved_utc": "2026-10-26T23:28:25.956900+00:00",
     "Census_aux_retrieved_utc": "2026-10-26T23:47:41.254276+00:00",
     "OSM_exclusion_masks_utc": "2026-10-25T21:21:21Z",
-    "frozen_road_graph_OSM_utc": "2026-08-14T20:21:03Z"
+    "current_common_road_graph_OSM_utc": "2026-10-25T21:21:21Z",
+    "historical_road_graph_OSM_utc": "2026-08-14T20:21:03Z"
   },
-  "verified_result": {
-    "city_count": 11,
-    "available_location_count": 5694,
-    "artifact_check_count": 198,
-    "artifact_root": "output/charging_location_freeze_20261026 (workspace root)",
-    "parameter_review_status": "frozen_under_charging_parameter_contract_v1; current_road_access_rebind_pending"
-  },
-  "scope_limit": "potential charging locations only; connector/vehicle applicability, power, hours and queues remain separate parameter/model review; whole-CLE release not asserted",
-  "current_road_graph_rebind_required": true
+  "snapshot_registry": "phase1_sources.template.json: charging station/census/units with independent acquisition metadata",
+  "status": "national_method; internal Stage1 acceptance requires same-graph independent cohort certificate"
 }

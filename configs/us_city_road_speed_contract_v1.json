@@ -15,7 +15,14 @@
   },
   "decision_date": "2026-10-26",
   "legal_speed": {
-    "hpms_public_spatial_vintage": 2018,
+    "hpms_public_spatial_vintage_if_provided": 2018,
+    "current_frozen_cohort_hpms_input": null,
+    "current_frozen_cohort_priority": [
+      "direction_applicable_OSM_maxspeed",
+      "generic_OSM_maxspeed",
+      "within_city_hierarchical_imputation"
+    ],
+    "current_frozen_cohort_observed_hpms_edges": 0,
     "hpms_role": "secondary functional-class/legal-limit evidence, not actual running-speed observations",
     "priority": [
       "direction_applicable_OSM_maxspeed",
@@ -50,7 +57,7 @@
     "scope": "OSM administrative boundary and driving graph only",
     "test_date": "2026-10-26"
   },
-  "next_review": "rebind charging and speed on the common graph; review CLE data structure and construction; independently freeze complete CLE before instance activation",
+  "stage1_acceptance_authority": "outputs/stage1_complete_20261027/stage1_freeze.json; no freeze is established until this receipt exists and its checks pass",
   "road_graph": {
     "access_contract": "local_road_access_contract_v2.json",
     "access_method": "delivery_terminal_access_v2",
@@ -81,7 +88,7 @@
     "synthetic_intercomponent_edges": false,
     "terminal_graph": "real OSM shared-node directed paths kept separate from through graph",
     "unknown_access": "retain source, mark review_required, exclude from default pool",
-    "verification_sha256": "e7c6002836eefbeb7c0d7ac77d02e23fa4d5659860147dbaf95b8ad0c9703f66"
+    "historical_pre_review_verification_sha256": "e7c6002836eefbeb7c0d7ac77d02e23fa4d5659860147dbaf95b8ad0c9703f66"
   },
   "running_speed": {
     "commercial_hour_day_effective_months": "2022-11 through 2023-05 after EPA exclusions",
@@ -109,7 +116,7 @@
     "unsupported_state_policy": "error_no_national_fallback"
   },
   "schema": "evrptw_city_road_speed_review_contract_v1",
-  "status": "road_customer_depot_components_verified_11_cities_speed_rebind_required",
+  "status": "stage1_common_graph_rebuild_and_independent_acceptance_required_before_freeze",
   "temporal_policy": {
     "distinguish": [
       "observation_date",

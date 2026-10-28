@@ -381,18 +381,19 @@ def _assign_legacy_facility_groups(
     geometries = np.asarray(metric.geometry.to_numpy(), dtype=object)
     tree = STRtree(geometries)
     pairs = tree.query(geometries, predicate="intersects")
+    tags = [json.loads(value) for value in frame["osm_tags_json"].astype(str)]
+    # Display names include generated placeholders such as "Unnamed warehouse".
+    # Only original source identity can support the R3 same-name merge rule.
     names = [
-        _normalized_facility_text(name or operator)
-        for name, operator in zip(
-            frame.get("facility_name", pd.Series("", index=frame.index)),
-            frame.get("operator", pd.Series("", index=frame.index)),
+        _normalized_facility_text(
+            _text(tag.get("name")) or _text(tag.get("official_name")) or _text(tag.get("operator"))
         )
+        for tag in tags
     ]
     addresses = [
         _normalized_facility_text(value)
         for value in frame.get("address", pd.Series("", index=frame.index))
     ]
-    tags = [json.loads(value) for value in frame["osm_tags_json"].astype(str)]
     accepted_landuse = {"industrial", "logistics", "warehouse", "depot"}
     for left, right in zip(pairs[0], pairs[1]):
         left = int(left)

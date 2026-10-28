@@ -81,12 +81,14 @@ def compose_footprints(new, legacy, *, area_crs, rules_path=None):
     new_local = new.to_crs(area_crs).geometry.to_numpy()
     old_local = old.to_crs(area_crs).geometry.to_numpy()
     valid_new = (
-        shapely.is_valid(new.geometry.to_numpy())
+        new.geometry.geom_type.isin(["Polygon", "MultiPolygon"]).to_numpy()
+        & shapely.is_valid(new.geometry.to_numpy())
         & shapely.is_valid(new_local)
         & (shapely.area(new_local) > 0)
     )
     valid_old = (
-        shapely.is_valid(old.geometry.to_numpy())
+        old.geometry.geom_type.isin(["Polygon", "MultiPolygon"]).to_numpy()
+        & shapely.is_valid(old.geometry.to_numpy())
         & shapely.is_valid(old_local)
         & (shapely.area(old_local) > 0)
     )

@@ -4,8 +4,8 @@ build-backend = "hatchling.build"
 
 [project]
 name = "evrptw-data-foundation"
-version = "0.1.0.dev0"
-description = "Reviewed geographic and potential delivery-location components for EVRPTW research"
+version = "0.2.0"
+description = "Build city logistics environments for electric vehicle routing research"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
@@ -26,10 +26,48 @@ evrptw-data = "evrptw_cle.cli:main"
 packages = ["src/evrptw_cle"]
 
 [tool.hatch.build.targets.wheel.force-include]
-"configs" = "evrptw_cle/resources"
+"configs/charging_location_contract_v1.json" = "evrptw_cle/resources/charging_location_contract_v1.json"
+"configs/charging_parameter_contract_v1.json" = "evrptw_cle/resources/charging_parameter_contract_v1.json"
+"configs/city_boundaries.json" = "evrptw_cle/resources/city_boundaries.json"
+"configs/cle_stage1_schema_v1.json" = "evrptw_cle/resources/cle_stage1_schema_v1.json"
+"configs/customer_residential_site_contract_v3.json" = "evrptw_cle/resources/customer_residential_site_contract_v3.json"
+"configs/delivery_frontage_contract_v1.json" = "evrptw_cle/resources/delivery_frontage_contract_v1.json"
+"configs/depot_location_contract_v2.json" = "evrptw_cle/resources/depot_location_contract_v2.json"
+"configs/local_road_access_contract_v2.json" = "evrptw_cle/resources/local_road_access_contract_v2.json"
+"configs/microsoft_geometry_rules_v1.json" = "evrptw_cle/resources/microsoft_geometry_rules_v1.json"
+"configs/osm_metadata/arizona.json" = "evrptw_cle/resources/osm_metadata/arizona.json"
+"configs/osm_metadata/florida.json" = "evrptw_cle/resources/osm_metadata/florida.json"
+"configs/osm_metadata/illinois.json" = "evrptw_cle/resources/osm_metadata/illinois.json"
+"configs/osm_metadata/new-york.json" = "evrptw_cle/resources/osm_metadata/new-york.json"
+"configs/osm_metadata/pennsylvania.json" = "evrptw_cle/resources/osm_metadata/pennsylvania.json"
+"configs/osm_metadata/socal.json" = "evrptw_cle/resources/osm_metadata/socal.json"
+"configs/osm_metadata/texas.json" = "evrptw_cle/resources/osm_metadata/texas.json"
+"configs/osm_sources.json" = "evrptw_cle/resources/osm_sources.json"
+"configs/project_status.json" = "evrptw_cle/resources/project_status.json"
+"configs/public_location_exclusions_v1.json" = "evrptw_cle/resources/public_location_exclusions_v1.json"
+"configs/us_11city_population_v1.json" = "evrptw_cle/resources/us_11city_population_v1.json"
+"configs/us_city_road_speed_contract_v1.json" = "evrptw_cle/resources/us_city_road_speed_contract_v1.json"
+"configs/us_national_charging_power_medians_v1.json" = "evrptw_cle/resources/us_national_charging_power_medians_v1.json"
+"configs/us_nei2023_streetlight_state_profiles_v1/AZ.json" = "evrptw_cle/resources/us_nei2023_streetlight_state_profiles_v1/AZ.json"
+"configs/us_nei2023_streetlight_state_profiles_v1/CA.json" = "evrptw_cle/resources/us_nei2023_streetlight_state_profiles_v1/CA.json"
+"configs/us_nei2023_streetlight_state_profiles_v1/FL.json" = "evrptw_cle/resources/us_nei2023_streetlight_state_profiles_v1/FL.json"
+"configs/us_nei2023_streetlight_state_profiles_v1/IL.json" = "evrptw_cle/resources/us_nei2023_streetlight_state_profiles_v1/IL.json"
+"configs/us_nei2023_streetlight_state_profiles_v1/NY.json" = "evrptw_cle/resources/us_nei2023_streetlight_state_profiles_v1/NY.json"
+"configs/us_nei2023_streetlight_state_profiles_v1/PA.json" = "evrptw_cle/resources/us_nei2023_streetlight_state_profiles_v1/PA.json"
+"configs/us_nei2023_streetlight_state_profiles_v1/TX.json" = "evrptw_cle/resources/us_nei2023_streetlight_state_profiles_v1/TX.json"
+"configs/us_nei2023_streetlight_state_profiles_v1/inputs/AZ.sql" = "evrptw_cle/resources/us_nei2023_streetlight_state_profiles_v1/inputs/AZ.sql"
+"configs/us_nei2023_streetlight_state_profiles_v1/inputs/CA.sql" = "evrptw_cle/resources/us_nei2023_streetlight_state_profiles_v1/inputs/CA.sql"
+"configs/us_nei2023_streetlight_state_profiles_v1/inputs/FL.sql" = "evrptw_cle/resources/us_nei2023_streetlight_state_profiles_v1/inputs/FL.sql"
+"configs/us_nei2023_streetlight_state_profiles_v1/inputs/IL.sql" = "evrptw_cle/resources/us_nei2023_streetlight_state_profiles_v1/inputs/IL.sql"
+"configs/us_nei2023_streetlight_state_profiles_v1/inputs/NY.sql" = "evrptw_cle/resources/us_nei2023_streetlight_state_profiles_v1/inputs/NY.sql"
+"configs/us_nei2023_streetlight_state_profiles_v1/inputs/PA.sql" = "evrptw_cle/resources/us_nei2023_streetlight_state_profiles_v1/inputs/PA.sql"
+"configs/us_nei2023_streetlight_state_profiles_v1/inputs/TX.sql" = "evrptw_cle/resources/us_nei2023_streetlight_state_profiles_v1/inputs/TX.sql"
+"configs/us_nei2023_streetlight_state_profiles_v1.json" = "evrptw_cle/resources/us_nei2023_streetlight_state_profiles_v1.json"
+"scripts" = "evrptw_cle/commands"
 
 [tool.hatch.build.targets.sdist]
-include = ["src", "configs", "tests", "docs", "scripts", "evidence", "README.md", "NOTICE.md", "pyproject.toml"]
+include = ["src", "configs", "tests", "docs", "scripts", "examples", "README.md", "README.zh-CN.md", "NOTICE.md", "pyproject.toml", "requirements-tested.txt"]
+exclude = ["configs/phase1_sources.template.json", "configs/customer_sources.template.json", "configs/road_extraction_cohort.template.json", "docs/*_ZH.md", "private", "evidence", "outputs", "data"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

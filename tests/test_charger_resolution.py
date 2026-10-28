@@ -33,6 +33,7 @@ def test_resolution_precedence_and_raw_geometry_are_auditable() -> None:
             "census_match_status": ["match"],
             "census_longitude": [-118.001],
             "census_latitude": [34.001],
+            "census_input_address": ["100 Main St, Example, CA, 90001"],
         }
     )
     osm = pd.DataFrame(
@@ -55,15 +56,17 @@ def test_resolution_precedence_and_raw_geometry_are_auditable() -> None:
             "review_note": ["operator map reviewed"],
         }
     )
-    result = resolve_afdc_coordinates(
-        _afdc(), census_results=census, osm_pois=osm, manual_overrides=manual
-    ).set_index("afdc_id")
+    with pytest.raises(ValueError,match="manual coordinate overrides are disabled"):
+        resolve_afdc_coordinates(_afdc(),manual_overrides=manual)
+    afdc=_afdc()
+    afdc["Geocode Status"]="200-8"
+    result = resolve_afdc_coordinates(afdc, census_results=census, osm_pois=osm).set_index("afdc_id")
 
     assert result.loc[1, "raw_afdc_longitude"] == pytest.approx(-118.0)
     assert result.loc[1, "address_anchor_source"] == "us_census_geocoder"
-    assert result.loc[1, "resolved_longitude"] == pytest.approx(-118.003)
-    assert result.loc[1, "resolved_geometry_source"] == "manual_reviewed_override"
-    assert result.loc[1, "coordinate_validation_tier"] == "V1_manual_reviewed_exact"
+    assert result.loc[1, "resolved_longitude"] == pytest.approx(-118.0)
+    assert result.loc[1, "resolved_geometry_source"] == "afdc_raw"
+    assert result.loc[1, "coordinate_validation_tier"] == "V_address_aux_250m"
     assert bool(result.loc[1, "coordinate_release_eligible"])
     assert result.loc[1, "matched_osm_charging_id"] == "n9"
     assert result.loc[1, "raw_to_address_anchor_m"] > 0
@@ -71,3 +74,21 @@ def test_resolution_precedence_and_raw_geometry_are_auditable() -> None:
     assert result.loc[2, "location_resolution_status"] == "uncorroborated_source_coordinate"
     assert result.loc[2, "coordinate_validation_status"] == ("uncorroborated_source_coordinate")
     assert not bool(result.loc[2, "coordinate_candidate_eligible"])
+
+
+@pytest.mark.parametrize("echoed_address", [None, "", "   "])
+def test_address_coordinate_needs_current_census_input_binding(echoed_address) -> None:
+    afdc = _afdc().iloc[:1].copy()
+    afdc["Geocode Status"] = "200-8"
+    evidence = {
+        "afdc_id": [1],
+        "census_match_status": ["match"],
+        "census_longitude": [-118.0],
+        "census_latitude": [34.0],
+    }
+    if echoed_address is not None:
+        evidence["census_input_address"] = [echoed_address]
+    result = resolve_afdc_coordinates(afdc, census_results=pd.DataFrame(evidence))
+    assert result.iloc[0].census_match_status == "missing_input_address"
+    assert result.iloc[0].address_anchor_source == "not_available"
+    assert not result.iloc[0].coordinate_candidate_eligible

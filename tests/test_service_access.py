@@ -21,6 +21,9 @@ def test_materializer_splits_both_directions_and_adds_symmetric_connector() -> N
         key=0,
         length=100.0,
         travel_time_s=10.0,
+        reference_travel_time_weekday_s=10.0,
+        reference_travel_time_weekend_s=8.0,
+        scenario_time_s=9.0,
         geometry=LineString([(0, 0), (100, 0)]),
     )
     graph.add_edge(
@@ -29,6 +32,9 @@ def test_materializer_splits_both_directions_and_adds_symmetric_connector() -> N
         key=0,
         length=100.0,
         travel_time_s=12.0,
+        reference_travel_time_weekday_s=12.0,
+        reference_travel_time_weekend_s=9.0,
+        scenario_time_s=11.0,
         geometry=LineString([(100, 0), (0, 0)]),
     )
     service_nodes = gpd.GeoDataFrame(
@@ -78,6 +84,15 @@ def test_materializer_splits_both_directions_and_adds_symmetric_connector() -> N
     assert in_edge["travel_time_s"] == pytest.approx(out_edge["travel_time_s"])
     assert audit["source_directed_edge_count_split"] == 2
     assert audit["materialized_directed_connector_edge_count"] == 2
+    for field in [
+        "travel_time_s",
+        "reference_travel_time_weekday_s",
+        "reference_travel_time_weekend_s",
+        "scenario_time_s",
+    ]:
+        assert nx.shortest_path_length(result, 1, 2, weight=field) == pytest.approx(
+            graph.edges[1, 2, 0][field]
+        )
 
 
 def test_materializer_uses_deterministic_reference_scc_when_sizes_tie() -> None:

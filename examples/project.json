@@ -1,0 +1,14 @@
+{
+  "schema": "evrptw_stage1_project_v1",
+  "sources": {
+    "inventory": "inputs/inventory.json",
+    "root": "inputs",
+    "roads": "inputs/roads",
+    "customers": null,
+    "osm_cohort": null
+  },
+  "output": "outputs/cle",
+  "cities": [
+    "dallas"
+  ]
+}

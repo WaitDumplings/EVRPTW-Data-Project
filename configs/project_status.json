@@ -1,23 +1,23 @@
 {
-  "schema": "evrptw_foundation_status_v1",
-  "stage": "reviewed_geographic_components_before_CLE_structure_freeze",
-  "customer_depot_location_components_frozen": true,
-  "common_graph_charging_rebound": false,
-  "common_graph_speed_rebound": false,
-  "cle_structure_frozen": false,
+  "schema": "evrptw_project_capabilities_v2",
+  "stage": 1,
+  "cle_construction_available": true,
+  "data_bundled": false,
   "instance_activation_included": false,
-  "reference_production": {
-    "cities": 11,
-    "customer_available": 4214699,
-    "depot_available_groups": 7555,
-    "verification_sha256": "e7c6002836eefbeb7c0d7ac77d02e23fa4d5659860147dbaf95b8ad0c9703f66"
-  },
-  "code_license_selected": false,
-  "large_inputs_distributed": false,
-  "remaining": [
-    "common-graph charging and speed rebinding",
-    "CLE schema and assembler audit",
-    "independent complete CLE verification and freeze",
-    "instance activation/demand/TW/service-time audit"
+  "commands": [
+    "init",
+    "plan",
+    "build",
+    "inspect",
+    "verify"
+  ],
+  "models": [
+    "public_road_graph",
+    "delivery_terminal_graph",
+    "charging_terminal_graph",
+    "residential_locations",
+    "spatial_depot_groups",
+    "native_charging_configurations",
+    "state_reference_speeds"
   ]
 }

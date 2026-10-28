@@ -130,14 +130,11 @@ def test_address_auxiliary_rejects_far_stale_and_unmatched_evidence():
         ).coordinate_candidate_eligible.any()
 
 
-def test_extreme_unverified_road_connector_is_quarantined():
+def test_charging_identity_does_not_reject_by_a_numeric_road_distance():
     frame = source()
     frame["road_access_distance_m"] = [1000.0, 1000.0, 1000.01]
     frame["charger_candidate_eligible"] = True
     _, members = collapse_charging_locations(frame)
     assert members.loc[0, "charger_candidate_eligible"]
-    assert not members.loc[2, "charger_candidate_eligible"]
-    assert (
-        members.loc[2, "location_quarantine_reason"]
-        == "road_coverage_or_access_unresolved_over_1000m"
-    )
+    assert members.loc[2, "charger_candidate_eligible"]
+    assert members.location_quarantine_reason.eq("").all()

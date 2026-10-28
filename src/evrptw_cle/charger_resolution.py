@@ -71,9 +71,11 @@ def resolve_afdc_coordinates(
     """Keep native geometry. GPS/Point admits independently; Address needs support.
 
     Census interpolation and same-address OSM are QA evidence, never automatic
-    replacement coordinates. A documented manual override is the only exception.
+    replacement coordinates. Per-record coordinate overrides are disabled.
     Census input addresses are bound to each current AFDC row when supplied.
     """
+    if manual_overrides is not None:
+        raise ValueError("Per-record manual coordinate overrides are disabled in Stage1")
     result = afdc.copy()
     result["afdc_id"] = pd.to_numeric(result["ID"], errors="raise").astype(int)
     if result.afdc_id.duplicated().any():
@@ -103,11 +105,6 @@ def resolve_afdc_coordinates(
         for _, r in osm_pois.iterrows():
             if valid_coordinate(r.get("longitude"), r.get("latitude")):
                 osm.setdefault(_osm_address_key(r), []).append(r)
-    manual = {}
-    if manual_overrides is not None:
-        if manual_overrides.afdc_id.duplicated().any():
-            raise ValueError("Manual evidence contains duplicate AFDC IDs")
-        manual = {int(r.afdc_id): r for _, r in manual_overrides.iterrows()}
     tiers, statuses, eligible = [], [], []
     for idx, row in result.iterrows():
         lon, lat = row.raw_afdc_longitude, row.raw_afdc_latitude
@@ -120,7 +117,9 @@ def resolve_afdc_coordinates(
             expected = normalize_text(
                 ", ".join(str(row.get(k, "")) for k in ("Street Address", "City", "State", "ZIP"))
             )
-            if echoed and echoed != expected:
+            if status == "match" and not echoed:
+                status = "missing_input_address"
+            elif echoed and echoed != expected:
                 status = "stale_input_address"
             result.at[idx, "census_match_status"] = status
             a_lon, a_lat = match.get("census_longitude"), match.get("census_latitude")
@@ -161,17 +160,6 @@ def resolve_afdc_coordinates(
             if valid and address_supported
             else "uncorroborated_source_coordinate"
         )
-        if int(row.afdc_id) in manual:
-            override = manual[int(row.afdc_id)]
-            if not valid_coordinate(
-                override.get("resolved_longitude"), override.get("resolved_latitude")
-            ) or not normalize_text(override.get("review_note")):
-                raise ValueError("Manual overrides require valid coordinates and a review note")
-            for axis in ("longitude", "latitude"):
-                result.at[idx, f"resolved_{axis}"] = float(override[f"resolved_{axis}"])
-            result.at[idx, "coordinate_review_note"] = str(override.review_note)
-            result.at[idx, "resolved_geometry_source"] = "manual_reviewed_override"
-            tier, state = "V1_manual_reviewed_exact", "exact_geometry_corroborated"
         tiers.append(tier)
         statuses.append(state)
         eligible.append(tier != "V0_quarantined")

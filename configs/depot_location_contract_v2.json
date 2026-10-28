@@ -1,4 +1,5 @@
 {
+  "acceptance_authority": "stage1_freeze.json",
   "definition": "potential spatial departure location; multiple operators may share one location; current business operations are not asserted",
   "group_identity": "facility_group_id",
   "grouping_policy": {
@@ -10,6 +11,20 @@
     "polygon_overlap_min_smaller_area_fraction": 0.8,
     "supplemental_campus_max_span_m": 1000.0,
     "version": "spatial_depot_v2"
+  },
+  "historical_upstream_reference": {
+    "all_city_access_audits_passed": true,
+    "artifact_root": null,
+    "available_location_count": 7555,
+    "city_count": 11,
+    "component_frozen": true,
+    "component_scope": "road/customer/depot location components; charging/speed rebind, whole CLE and instance activation remain separate",
+    "pending_group_count": 232,
+    "retained_source_safe_group_count": 7787,
+    "source_geometries_and_spatial_groups_unchanged": true,
+    "verification_reference": "evidence/production_reference.json",
+    "verification_scope": "upstream production reference; not a full regeneration from this new repository",
+    "verification_sha256": "e7c6002836eefbeb7c0d7ac77d02e23fa4d5659860147dbaf95b8ad0c9703f66"
   },
   "limits": [
     "OSM is incomplete; source-supported modeled candidates are not a depot census",
@@ -36,27 +51,13 @@
     "version": "public_location_exclusions_v1"
   },
   "road_access_contract": "local_road_access_contract_v2.json",
-  "sampling": "uniform spatial location first; tier-A-preferred access within location; no area/company/member-count weights",
+  "sampling": "Stage1 stores one canonical spatial group and all member access rows; operating-day sampling is deferred to Stage2",
   "schema": "evrptw_depot_location_contract_v2",
-  "source_registry": "us_11city_depot_osm_sources_v1.json",
-  "status": "modeling_method_frozen_generator_integrated_11_city_access_verified",
+  "source_registry": "phase1_sources.template.json: city depot raw/extraction entries",
+  "status": "national_spatial_method; internal Stage1 acceptance via final cohort certificate",
   "tiers": {
     "A": "source-supported parcel carrier or dispatch facility proxy",
     "B": "warehouse/logistics facility or ordinary logistics office proxy",
     "C": "generic industrial context only, retail counters, unsupported non-ground office; not candidates"
-  },
-  "validation": {
-    "all_city_access_audits_passed": true,
-    "artifact_root": null,
-    "available_location_count": 7555,
-    "city_count": 11,
-    "component_frozen": true,
-    "component_scope": "road/customer/depot location components; charging/speed rebind, whole CLE and instance activation remain separate",
-    "pending_group_count": 232,
-    "retained_source_safe_group_count": 7787,
-    "source_geometries_and_spatial_groups_unchanged": true,
-    "verification_sha256": "e7c6002836eefbeb7c0d7ac77d02e23fa4d5659860147dbaf95b8ad0c9703f66",
-    "verification_reference": "evidence/production_reference.json",
-    "verification_scope": "upstream production reference; not a full regeneration from this new repository"
   }
 }

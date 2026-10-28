@@ -71,7 +71,7 @@ def residential_points(features, *, boundary):
         "usastrucid",
         "cbfips",
     ]
-    rows, coordinates, seen = [], [], set()
+    rows, coordinates, seen = [], [], {}
     duplicates = total = 0
     for feature in features:
         total += 1
@@ -86,10 +86,24 @@ def residential_points(features, *, boundary):
             if props.get("fd_id") is not None
             else ("fallback", props.get("bid"), float(xy[0]), float(xy[1]), props.get("occtype"))
         )
+        # Only native evidence consumed by this pipeline participates. Differences
+        # in unrelated API metadata do not change a record, but a repeated source
+        # ID must never silently choose the first geometry, occupancy or units.
+        evidence = tuple(props.get(key) for key in fields) + ((float(xy[0]), float(xy[1])),)
         if identity in seen:
+            previous = seen[identity]
+            changed = [
+                key
+                for key, before, after in zip(fields + ["coordinates"], previous, evidence)
+                if before != after
+            ]
+            if changed:
+                raise ValueError(
+                    f"Conflicting duplicate NSI source identity {identity!r}: " + ", ".join(changed)
+                )
             duplicates += 1
             continue
-        seen.add(identity)
+        seen[identity] = evidence
         code = str(props.get("occtype") or "UNKNOWN").upper()
         if not code.startswith(("RES1", "RES2", "RES3")):
             continue

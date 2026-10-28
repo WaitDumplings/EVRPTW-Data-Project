@@ -112,3 +112,41 @@ def test_conflicting_unit_address_is_quarantined_without_power_fallback():
     result, _, _, summary = select_reference_configurations(locations, members, units, MEDIANS)
     assert not result.reference_vehicle_eligible.any()
     assert summary["unit_source_binding_conflicts"] == 2
+
+
+def test_changing_representative_keeps_source_equipment_and_location_identity_consistent():
+    locations, members, units = fixture()
+    members["source_charger_id"] = ["afdc_1", "afdc_2"]
+    members["charger_id"] = members.source_charger_id
+    members["Station Name"] = ["AC source", "DC source"]
+    members["EV Connector Types"] = ["J1772", "J1772 J1772COMBO"]
+    members["EV Level2 EVSE Num"] = [1, 1]
+    members["EV DC Fast Count"] = [0, 1]
+    members["Maximum Vehicle Class"] = ["LD", ""]
+    # Collapsing initially prefers a DC representative, but a reported AC rate
+    # wins over the DC member's missing power (and its AC rate fails power QA).
+    for field in [
+        "ID",
+        "Station Name",
+        "EV Connector Types",
+        "EV Level2 EVSE Num",
+        "EV DC Fast Count",
+        "Maximum Vehicle Class",
+    ]:
+        locations[field] = members.iloc[1][field]
+    locations["source_member_count"] = 2
+    locations["eligible_afdc_ids_json"] = "[1, 2]"
+    locations["port_count_scope"] = "representative_source_record_not_location_total"
+    units.loc[units.ID.eq(2), "EV CCS Power Output (kW)"] = np.nan
+
+    result, _, _, _ = select_reference_configurations(locations, members, units, MEDIANS)
+    row = result.iloc[0]
+    assert row.ID == 1 and row.source_charger_id == "afdc_1"
+    assert row.selected_configuration_id.startswith("afdc_1:")
+    assert row["Station Name"] == "AC source"
+    assert row["EV Connector Types"] == "J1772" and not row.has_ccs1
+    assert row["EV DC Fast Count"] == row.dc_fast_ports == 0
+    assert row.reference_vehicle_class_status == "weight_category_not_excluded"
+    assert row.charger_id == row.charging_location_id == "loc"
+    assert row.source_member_count == 2 and row.eligible_afdc_ids_json == "[1, 2]"
+    assert row.port_count_scope == "representative_source_record_not_location_total"

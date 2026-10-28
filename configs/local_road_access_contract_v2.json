@@ -1,0 +1,136 @@
+{
+  "acceptance_authority": "stage1_freeze.json; current acceptance is not inferred from historical component counts",
+  "additional_local_datasets": false,
+  "authorized_delivery": {
+    "admitted_flag": "delivery_authorization_assumed",
+    "hard_exclusions": [
+      "effective motor prohibition",
+      "explicit delivery prohibition",
+      "locked=yes",
+      "unsupported physical barriers",
+      "identified sensitive facilities and masks",
+      "emergency_access service ways",
+      "unresolved effective access values"
+    ],
+    "ordinary_private": "admit modeled invited-delivery terminal access when all other checks pass",
+    "owner_permission_observed": false,
+    "physical_barriers_not_assumed_passable": [
+      "block",
+      "bollard",
+      "cycle_barrier",
+      "jersey_barrier",
+      "kissing_gate",
+      "stile",
+      "turnstile",
+      "wall",
+      "fence",
+      "chain"
+    ],
+    "private_nodes": "ordinary private access nodes may be traversed only for the modeled invited delivery; preserve source tags and purpose restrictions",
+    "purpose_only_roads": "private, destination/customers and service roads are terminal-only; never public through-routing",
+    "source_tag_absence": "absence of a prohibition is a modeling default, not observed unrestricted real access"
+  },
+  "connector_obstacles": {
+    "all_roles": [
+      "identified exclusion masks",
+      "mapped city water",
+      "nonhosting or restricted motor-road crossings",
+      "other Microsoft buildings not intersecting the source location geometry"
+    ],
+    "entrance_ground_truth": false,
+    "unmapped_obstacles": "remain an explicit limitation",
+    "water_intersection_numerical_tolerance_m": 0.01
+  },
+  "customer_geometry": "unchanged full independent-residence footprint or source-supported residential-complex extent; nearest geometry pair, never centroid substitution",
+  "depot_geometry": "unchanged internal representative point; native OSM extent retained only to scale local candidate search; spatial_depot_v2 group identities unchanged",
+  "distance": {
+    "comparison_tail_m": 1000,
+    "connector_length": "source geometry to selected local physical-road projection only",
+    "customer_qa_reference_m": 200,
+    "depot_qa_reference_m": 250,
+    "numeric_distance_exclusion": false,
+    "terminal_length": "additional real directed OSM road distance, stored separately from geometric connector"
+  },
+  "forbidden_host_road_classes": [
+    "motorway",
+    "motorway_link",
+    "trunk",
+    "trunk_link",
+    "construction",
+    "proposed",
+    "raceway",
+    "track"
+  ],
+  "frontage_contract": "delivery_frontage_contract_v1.json",
+  "local_candidate_check": {
+    "alternative_permissions": "strict motor access only; no private authorization used to rescue a failed nearest frontage",
+    "checks": "real directed entry and exit plus the same exclusion, mapped-water, road-crossing and customer-building obstacles",
+    "deterministic_order": [
+      "geometry gap",
+      "OSM way ID",
+      "physical segment ID"
+    ],
+    "hard_failures": "no alternate search bypasses explicit prohibition, sensitive exclusions, unsupported barriers or mapped water",
+    "initial_candidate": "nearest physical road, including diagnostic restricted candidates",
+    "maximum_distinct_osm_ways": 8,
+    "no_valid_candidate": "retain original source location and nullable units; mark pending and exclude from default activation pool",
+    "radius_with_source_extent": "initial geometry gap + 2 * source extent bounding-box diagonal",
+    "radius_without_extent": "2 * initial point-to-road gap",
+    "retry_only_reasons": [
+      "connector_crosses_other_mapped_building",
+      "local_road_no_verified_directed_roundtrip"
+    ]
+  },
+  "local_inventory": "available valid complete ways in the frozen regional PBFs intersecting city + 20km; provider extract coverage bounds the effective domain",
+  "method_references": [
+    "https://wiki.openstreetmap.org/wiki/Key:access",
+    "https://wiki.openstreetmap.org/wiki/Tag:access%3Dprivate",
+    "https://wiki.openstreetmap.org/wiki/Tag:access%3Ddestination"
+  ],
+  "model_target": "source-supported potential delivery locations and directed access in a city road environment",
+  "operational_unit_estimates": "nullable; unresolved source-owner scope clears the modeled estimate under source_scope_identity_guard_v1",
+  "osm_replication_timestamp_utc": "2026-10-25T21:21:21Z",
+  "per_location_id_exceptions": false,
+  "permission_precedence": [
+    "motorcar",
+    "motor_vehicle",
+    "vehicle",
+    "access:delivery",
+    "access"
+  ],
+  "policy": "delivery_terminal_access_v2",
+  "public_export": "exclude private build masks, excluded-sensitive source inventories and internal blocked-road inventories",
+  "raw_source_unit_values_changed": false,
+  "road_selection": {
+    "buffer_ladder_km": [
+      0,
+      1,
+      2,
+      5,
+      10,
+      20
+    ],
+    "coverage_claim": "relative to this finite frozen OSM envelope; no guarantee of complete global routing connectivity",
+    "global_percentage_early_stop": false,
+    "outside_city_roads": "routing/access only; source locations remain within frozen service boundary",
+    "selection": "smallest junction-node buffer recovering all city public nodes reachable at the maximum available envelope",
+    "synthetic_intercomponent_edges": false
+  },
+  "schema": "evrptw_local_road_access_contract_v2",
+  "scope": "customer/depot location components; common charging/speed rebinding, CLE structure/construction and instance activation remain separate audited steps",
+  "sensitive_hosts": "public_location_exclusions_v1 source/anchor policy; source-safe uncertain access retained without publishing excluded anchors",
+  "source_registry": "phase1_sources.template.json",
+  "terminal_paths": {
+    "connection": "shared OSM nodes; never proximity-only fabricated junctions",
+    "direction": "source one-way, reverse and roundabout direction; turn-restriction relations not yet modeled",
+    "entry_and_exit": "separate real directed source-edge paths ending at public reference-SCC gateways",
+    "gateway_choice": "independently shortest directed ingress/egress to the public reference SCC; not a proof of globally optimal OD choice over all entrances",
+    "legacy_matrix_consumer": "reject terminal rows rather than silently omit access paths",
+    "metric_claim": "do not assume symmetry or triangle inequality for a purpose-specific directed terminal OD construction",
+    "operating_speed": "not inferred by location admission; explicit smoke-test speeds do not constitute a production speed layer",
+    "pair_consumer": "evrptw_cle.terminal_pair.materialize_local_access_pair",
+    "pair_scope": "only source egress and destination ingress are materialized, with source ownership and authorization metadata",
+    "public_through_routing": false
+  },
+  "verification_required": "actual 11-city saved source ownership, source/graph/policy/code hashes, independent SCC, directed paths, common source-edge speeds and cost conservation; authority is the final cohort certificate"
+}

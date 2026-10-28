@@ -4,37 +4,25 @@ from __future__ import annotations
 
 import hashlib
 import json
-import tempfile
-from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
 import geopandas as gpd
 import numpy as np
-import osmnx as ox
 import pandas as pd
 import shapely
 from shapely.strtree import STRtree
 
-from .charger_locations import LOCATION_POLICY, collapse_charging_locations
 from .charger_resolution import COORDINATE_POLICY, resolve_afdc_coordinates
-from .charging_parameters import (
-    CONFIG_ROOT,
-    load_frozen_charging_units,
-    select_reference_configurations,
-)
-from .customer_access import _projection_offsets_json, build_eligible_physical_edges
+from .customer_access import _projection_offsets_json
 from .protected_connectivity import (
-    build_directed_component_index,
-    connectivity_summary,
     label_projection_connectivity,
 )
 from .public_locations import (
     PUBLIC_LOCATION_POLICY,
     filter_public_locations,
-    load_exclusion_masks,
 )
-from .util import sha256_file, write_json
+from .util import sha256_file
 
 
 def _number(series: pd.Series) -> pd.Series:
@@ -322,6 +310,7 @@ def build_depot_layer(
     masks: gpd.GeoDataFrame | None = None,
     max_road_access_m: float = 250.0,
     access_context=None,
+    footprints=None,
 ) -> tuple[gpd.GeoDataFrame, dict[str, Any]]:
     """Materialize the public depot pool against directed eligible road edges."""
     depots, source_filter = filter_public_locations(depots, masks)
@@ -335,7 +324,7 @@ def build_depot_layer(
     else:
         local = depots.copy()
         local["latent_service_location_id"] = local["candidate_id"].astype(str)
-        depots = access_context.anchor(local, masks=masks)
+        depots = access_context.anchor(local, masks=masks, footprints=footprints)
         depots["facility_access_node_id"] = depots.service_access_node_id
         depots["facility_access_connector_id"] = depots.service_access_connector_id
         anchor_filter = {
@@ -357,327 +346,11 @@ def build_depot_layer(
     return depots, {"source_filter": source_filter, "road_anchor_filter": anchor_filter}
 
 
-def build_charger_layers(
-    chargers, edges, component_index, area_crs, *, masks=None, max_road_access_m=250.0
-):
-    """Apply public-source, directed-road and unique-location gates uniformly."""
-    chargers, charger_public_filter = filter_public_locations(chargers, masks)
-    chargers["facility_anchor_id"] = chargers["charger_id"]
-    chargers = _anchor_points_to_edges(chargers, edges, area_crs)
-    chargers = label_projection_connectivity(chargers, component_index)
-    chargers, charger_anchor_public_filter = _filter_public_anchors(chargers, masks)
-    chargers["road_access_distance_qa_flag"] = (
-        chargers["road_access_distance_m"] > max_road_access_m
-    )
-    chargers["road_anchor_eligible"] = chargers["protected_roundtrip_eligible"].astype(bool)
-    chargers["charger_candidate_eligible"] = (
-        chargers["restricted_public"].ne(True)
-        & chargers["reference_charge_mode"].ne("unsupported_or_unresolved")
-        & chargers["coordinate_candidate_eligible"].astype(bool)
-        & chargers["road_anchor_eligible"]
-    )
-    chargers["charger_release_eligible"] = False
-    chargers["release_blocker"] = np.select(
-        [
-            ~chargers["coordinate_candidate_eligible"].astype(bool),
-            ~chargers["road_anchor_eligible"].astype(bool),
-            chargers["restricted_public"].eq(True),
-            chargers["reference_charge_mode"].eq("unsupported_or_unresolved"),
-            chargers["medium_duty_vehicle_class_status"].eq("not_supported"),
-        ],
-        [
-            "coordinate_not_corroborated",
-            "outside_reference_directed_scc",
-            "restricted_public_access",
-            "connector_unresolved",
-            "maximum_vehicle_class_light_duty",
-        ],
-        default="station_power_and_vehicle_compatibility_not_fully_verified",
-    )
-
-    locations, members = collapse_charging_locations(chargers)
-    audit = {
-        "coordinate_policy": COORDINATE_POLICY,
-        "location_policy": LOCATION_POLICY,
-        "source_filter": charger_public_filter,
-        "road_anchor_filter": charger_anchor_public_filter,
-        "safe_source_records": len(members),
-        "unique_locations": len(locations),
-        "candidate_eligible_source_records": int(members.charger_candidate_eligible.sum()),
-        "candidate_eligible_locations": int(locations.charger_candidate_eligible.sum()),
-        "quarantine_reason_counts": {
-            str(k): int(v)
-            for k, v in members.location_quarantine_reason.value_counts().items()
-            if k
-        },
-        "port_count_policy": "retain per-source configurations; no automatic port total",
-    }
-    return locations, members, audit
+def build_charger_layers(*args, **kwargs):
+    """Retired operational-edge-only API; never fall back to an old road model."""
+    raise RuntimeError("Legacy charger builder retired; use charging_component.build_charging_component")
 
 
-def build_facility_layers(
-    *,
-    city_slug: str,
-    afdc_path: Path,
-    depot_candidates_path: Path,
-    depot_summary_path: Path,
-    boundary_path: Path,
-    graph_path: Path,
-    output_dir: Path,
-    area_crs: str,
-    max_road_access_m: float = 250.0,
-    access_context=None,
-) -> dict[str, Any]:
-    """Build candidate facility layers; release eligibility remains evidence-gated."""
-
-    if output_dir.exists():
-        raise FileExistsError(f"Refusing to overwrite facility output: {output_dir}")
-    boundary_frame = gpd.read_file(boundary_path).to_crs("EPSG:4326")
-    boundary = boundary_frame.geometry.union_all()
-    afdc_resolution_manifest_path = afdc_path.with_suffix(".manifest.json")
-    afdc_resolution_manifest = None
-    if afdc_resolution_manifest_path.is_file():
-        afdc_resolution_manifest = json.loads(
-            afdc_resolution_manifest_path.read_text(encoding="utf-8")
-        )
-        recorded_hash = _afdc_manifest_output_sha256(afdc_resolution_manifest)
-        if recorded_hash and recorded_hash != sha256_file(afdc_path):
-            raise ValueError("AFDC table and coordinate-resolution manifest hashes differ")
-    depot_summary = json.loads(depot_summary_path.read_text(encoding="utf-8"))
-    if depot_summary.get("city_slug") != city_slug:
-        raise ValueError("Depot summary city_slug differs from requested city")
-    if depot_summary.get("candidate_csv_sha256") != sha256_file(depot_candidates_path):
-        raise ValueError(
-            "Depot candidate table is not bound to its current source summary; rebuild depot candidates"
-        )
-    if (
-        depot_summary.get("facility_grouping", {}).get("policy", {}).get("version")
-        != "spatial_depot_v2"
-    ):
-        raise ValueError("Depot inputs predate the current spatial location contract")
-    if depot_summary.get("source", {}).get("boundary_sha256") != sha256_file(boundary_path):
-        raise ValueError("Depot audit used a different service boundary")
-    if depot_summary.get("graph_gate", {}).get("graph_path") != str(graph_path.resolve()):
-        raise ValueError("Depot audit used a different operational graph")
-    recorded_depot_graph_sha = depot_summary.get("graph_gate", {}).get("graph_sha256")
-    if recorded_depot_graph_sha and recorded_depot_graph_sha != sha256_file(graph_path):
-        raise ValueError("Depot audit used a different operational graph hash")
-
-    public_record = depot_summary.get("public_location_policy", {})
-    mask_path = Path(public_record["mask_path"]) if public_record.get("mask_path") else None
-    if mask_path is None or not mask_path.is_file():
-        raise ValueError(
-            "Depot inputs lack the public-location exclusion mask; rebuild depot candidates"
-        )
-    if sha256_file(mask_path) != public_record.get("mask_sha256"):
-        raise ValueError("Public-location exclusion mask checksum changed")
-    masks = load_exclusion_masks(mask_path)
-
-    context_manifest = Path(graph_path).parent / "access_context_manifest.json"
-    if access_context is None and context_manifest.is_file():
-        from .local_road_access import LocalAccessContext
-
-        access_context = LocalAccessContext.load(context_manifest.parent)
-    graph = access_context.core if access_context is not None else ox.load_graphml(graph_path)
-    edges = build_eligible_physical_edges(graph_path, area_crs, graph=graph)
-    component_index = build_directed_component_index(graph)
-    chargers = _normalize_chargers(_filter_afdc_city(afdc_path, boundary, city_slug))
-    chargers, charging_members, charging_location_audit = build_charger_layers(
-        chargers,
-        edges,
-        component_index,
-        area_crs,
-        masks=masks,
-        max_road_access_m=max_road_access_m,
-    )
-    units, charging_contract = load_frozen_charging_units()
-    chargers, charging_members, charging_configurations, charging_parameters = (
-        select_reference_configurations(
-            chargers,
-            charging_members,
-            units,
-            charging_contract["new_national_medians_kw"],
-        )
-    )
-    charger_public_filter = charging_location_audit["source_filter"]
-    charger_anchor_public_filter = charging_location_audit["road_anchor_filter"]
-
-    depots = _read_depots(depot_candidates_path, boundary, city_slug)
-    depots, depot_public_filter = build_depot_layer(
-        depots,
-        edges,
-        component_index,
-        area_crs,
-        masks=masks,
-        max_road_access_m=max_road_access_m,
-        access_context=access_context,
-    )
-
-    output_dir.parent.mkdir(parents=True, exist_ok=True)
-    with tempfile.TemporaryDirectory(
-        prefix=f"{city_slug}-facilities-", dir=output_dir.parent
-    ) as temp:
-        staged = Path(temp) / output_dir.name
-        staged.mkdir()
-        charger_path = staged / "chargers.parquet"
-        depot_path = staged / "depots.parquet"
-        chargers.to_parquet(charger_path, index=False)
-        charging_members.to_parquet(staged / "charging_members.parquet", index=False)
-        charging_configurations.to_parquet(staged / "charging_configurations.parquet", index=False)
-        depots.to_parquet(depot_path, index=False)
-        manifest = {
-            "schema": "evrptw_city_facility_layers_v6",
-            "generation_module_sha256": sha256_file(Path(__file__)),
-            "generation_dependencies": _generation_dependencies(),
-            "status": "cle_build_candidates_not_release_eligible",
-            "generated_utc": datetime.now(UTC).isoformat(),
-            "city_slug": city_slug,
-            "inputs": {
-                "afdc": {"path": str(afdc_path.resolve()), "sha256": sha256_file(afdc_path)},
-                "charging_units": {
-                    "path": str(
-                        (CONFIG_ROOT.parent / charging_contract["unit_source"]["path"]).resolve()
-                    ),
-                    "sha256": charging_contract["unit_source"]["sha256"],
-                },
-                "charging_parameter_contract": {
-                    "path": str(CONFIG_ROOT / "charging_parameter_contract_v1.json"),
-                    "sha256": sha256_file(CONFIG_ROOT / "charging_parameter_contract_v1.json"),
-                },
-                "afdc_resolution_manifest": (
-                    {
-                        "path": str(afdc_resolution_manifest_path.resolve()),
-                        "sha256": sha256_file(afdc_resolution_manifest_path),
-                        "schema": afdc_resolution_manifest.get("schema"),
-                    }
-                    if afdc_resolution_manifest is not None
-                    else None
-                ),
-                "depot_candidates": {
-                    "path": str(depot_candidates_path.resolve()),
-                    "sha256": sha256_file(depot_candidates_path),
-                },
-                "depot_summary": {
-                    "path": str(depot_summary_path.resolve()),
-                    "sha256": sha256_file(depot_summary_path),
-                },
-                "public_exclusion_masks": {
-                    "path": str(mask_path.resolve()),
-                    "sha256": sha256_file(mask_path),
-                },
-                "boundary": {
-                    "path": str(boundary_path.resolve()),
-                    "sha256": sha256_file(boundary_path),
-                },
-                "graph": {"path": str(graph_path.resolve()), "sha256": sha256_file(graph_path)},
-            },
-            "source_provenance": {
-                "depot_osm": {
-                    key: depot_summary.get("source", {}).get(key)
-                    for key in (
-                        "dataset",
-                        "pbf_source_url",
-                        "pbf_replication_timestamp_utc",
-                        "pbf_sha256",
-                        "boundary_sha256",
-                    )
-                },
-                "road_osm": depot_summary.get("road_source", {}),
-                "depot_generation": depot_summary.get("build_contract", {}),
-                "grouping_policy": depot_summary.get("facility_grouping", {}).get("policy"),
-                "afdc_snapshot": afdc_resolution_manifest,
-            },
-            "public_location_policy": {
-                "policy": PUBLIC_LOCATION_POLICY,
-                "mask_sha256": sha256_file(mask_path),
-                "depot_filter": depot_public_filter,
-                "charger_filter": charger_public_filter,
-                "charger_road_anchor_filter": charger_anchor_public_filter,
-            },
-            "road_anchor": {
-                "method": "facility point to eligible operational physical edge projection",
-                "eligible_physical_edge_count": len(edges),
-                "distance_qa_reference_m": max_road_access_m,
-                "distance_policy": "retain all; flag the distance tail for coordinate/access review",
-                "projection_contract": "per-directed-edge offsets retained for exact active-facility edge splitting",
-                "connector_contract": "facility point to road projection is bidirectional with equal instance-assigned speed",
-                "protected_roundtrip_policy": (
-                    "default benchmark candidates must inherit the largest directed road SCC"
-                ),
-            },
-            "charging": {
-                "location_contract": charging_location_audit,
-                "parameter_contract": charging_parameters,
-                "inside_boundary_public_available_site_count": len(chargers),
-                "road_anchor_eligible_count": int(chargers["road_anchor_eligible"].sum()),
-                "road_access_distance_qa_flag_count": int(
-                    chargers["road_access_distance_qa_flag"].sum()
-                ),
-                "candidate_eligible_count": int(chargers["charger_candidate_eligible"].sum()),
-                "coordinate_candidate_eligible_count": int(
-                    chargers["coordinate_candidate_eligible"].sum()
-                ),
-                "coordinate_exact_geometry_count": int(
-                    chargers["coordinate_validation_status"].eq("exact_geometry_corroborated").sum()
-                ),
-                "coordinate_address_only_count": int(
-                    chargers["coordinate_validation_status"]
-                    .eq("address_corroborated_exact_geometry_unverified")
-                    .sum()
-                ),
-                "coordinate_uncorroborated_count": int(
-                    chargers["coordinate_validation_status"]
-                    .eq("uncorroborated_source_coordinate")
-                    .sum()
-                ),
-                "coordinate_validation_tier_counts": {
-                    str(key): int(value)
-                    for key, value in chargers["coordinate_validation_tier"]
-                    .value_counts()
-                    .sort_index()
-                    .items()
-                },
-                "protected_connectivity": connectivity_summary(chargers, component_index),
-                "release_eligible_count": 0,
-                "ccs1_site_count": int(chargers["has_ccs1"].sum()),
-                "j1772_site_count": int(chargers["has_j1772"].sum()),
-                "restricted_public_site_count": int(chargers["restricted_public"].eq(True).sum()),
-                "power_policy": "compatible per-unit/connector reported power preferred; missing/QA uses frozen compatible-mode median; vehicle cap before single Stage2 derating",
-            },
-            "depots": {
-                "retained_candidate_count": len(depots),
-                "retained_location_count": int(depots["facility_group_id"].nunique()),
-                "candidate_eligible_location_count": int(
-                    depots.loc[depots["depot_candidate_eligible"], "facility_group_id"].nunique()
-                ),
-                "road_access_distance_qa_flag_count": int(
-                    depots["road_access_distance_qa_flag"].sum()
-                ),
-                "candidate_eligible_count": int(depots["depot_candidate_eligible"].sum()),
-                "protected_connectivity": connectivity_summary(depots, component_index),
-                "strict_candidate_eligible_count": int(
-                    depots["strict_depot_candidate_eligible"].sum()
-                ),
-                "optional_candidate_eligible_count": int(
-                    depots["optional_depot_candidate_eligible"].sum()
-                ),
-                "release_eligible_count": 0,
-                "release_policy": (
-                    "modeled source-supported Tier A and optional Tier B departure locations; "
-                    "current last-mile operation is not asserted; whole-CLE release gates remain separate"
-                ),
-            },
-            "outputs": {
-                "chargers": "chargers.parquet",
-                "charging_members": "charging_members.parquet",
-                "charging_configurations": "charging_configurations.parquet",
-                "depots": "depots.parquet",
-            },
-        }
-        write_json(staged / "facility_manifest.json", manifest)
-        manifest["output_sha256"] = {
-            name: sha256_file(staged / relative) for name, relative in manifest["outputs"].items()
-        }
-        write_json(staged / "facility_manifest.json", manifest)
-        staged.replace(output_dir)
-    return manifest
+def build_facility_layers(*args, **kwargs):
+    """Retired combined API; construct explicit Stage1 purpose-specific components."""
+    raise RuntimeError("Legacy facility pipeline retired; use scripts/build_stage1.py")

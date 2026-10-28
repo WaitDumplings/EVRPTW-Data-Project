@@ -105,3 +105,13 @@ def test_facility_cache_rejects_changed_source_or_mask(tmp_path):
     mask.write_bytes(b"mask-v1")
     source.write_bytes(b"source-v2")
     assert not facilities.facility_inputs_current(manifest, depot_candidates=source)
+
+
+def test_retired_facility_paths_cannot_bypass_the_common_graph_contract():
+    import pytest
+    from evrptw_cle.facilities import build_charger_layers, build_facility_layers
+
+    with pytest.raises(RuntimeError,match="retired"):
+        build_charger_layers()
+    with pytest.raises(RuntimeError,match="retired"):
+        build_facility_layers()

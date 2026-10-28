@@ -16,16 +16,23 @@ import numpy as np
 import osmnx as ox
 import pandas as pd
 import shapely
+from pyproj import CRS
 
-from .runtime_paths import CONFIG_ROOT
-from .local_road_access import BUFFER_LADDER_KM, LocalAccessContext, _forest
+from .context_validation import validate_generation_dependencies
+from .frontage import FRONTAGE_PATH, apply_frontage_guard
+from .local_road_access import (
+    BUFFER_LADDER_KM,
+    TOPOLOGY_CONTRACT,
+    OPERATING_ROAD_CLASSES,
+    LocalAccessContext,
+    _forest,
+)
 from .public_locations import excluded_location_reason
 from .terminal_access import _effective_motor_access
 from .util import sha256_file, write_json
 
 POLICY = "delivery_terminal_access_v2"
 
-HOLDS_PATH = CONFIG_ROOT / "us_location_access_review_holds_v1.json"
 PHYSICAL_BLOCKS = {
     "block",
     "bollard",
@@ -44,15 +51,34 @@ def flag(value):
     return value is True or str(value).lower() in {"true", "1"}
 
 
+def _generic_charging_permission(tags):
+    """Charging cannot inherit an exception granted only for deliveries."""
+    field, tier = _effective_motor_access(
+        {key: value for key, value in tags.items() if key != "access:delivery"}
+    )
+    physical_block = tags.get("locked") == "yes" or tags.get("barrier") in PHYSICAL_BLOCKS
+    physical_block = physical_block or tags.get("service") == "emergency_access"
+    allowed = tier in {"explicit_yes", "permissive", "unspecified", "destination_or_customers"}
+    return dict(
+        source_tag=field,
+        legal_access_tier=tier,
+        physical_block=bool(physical_block),
+        allowed=bool(allowed and not physical_block),
+        source_tags=tags,
+    )
+
+
 def permission_inventory(physical, source_dir, masks):
     """Apply the accepted authorized-delivery policy to real source segments."""
     roads = physical.copy()
     nodes = pd.read_parquet(
         Path(source_dir) / "osm_access_nodes.parquet", columns=["osmid", "tags_json"]
     )
-    private_nodes, hard_nodes = set(), set()
+    private_nodes, purpose_nodes, hard_nodes = set(), set(), set()
+    charging_nodes = {}
     for row in nodes.itertuples():
         tags = json.loads(row.tags_json)
+        charging_nodes[str(row.osmid)] = _generic_charging_permission(tags)
         _, legal = _effective_motor_access(tags)
         hard = (
             tags.get("access:delivery") in {"no", "prohibited", "none"}
@@ -65,16 +91,22 @@ def permission_inventory(physical, source_dir, masks):
             hard = True
         if legal == "permit_required" and not hard:
             private_nodes.add(str(row.osmid))
+        if legal in {"destination_or_customers", "delivery_only"} and not hard:
+            purpose_nodes.add(str(row.osmid))
         if legal in {"prohibited", "unresolved_tag_value"} or hard:
             hard_nodes.add(str(row.osmid))
     ways = pd.read_parquet(Path(source_dir) / "osm_ways.parquet", columns=["osmid", "tags_json"])
     hard_ways = set()
+    charging_ways = {}
     for row in ways.itertuples():
         tags = json.loads(row.tags_json)
+        charging_ways[str(row.osmid)] = _generic_charging_permission(tags)
         _, legal = _effective_motor_access(tags)
         if (
             tags.get("access:delivery") in {"no", "prohibited", "none"}
             or tags.get("service") == "emergency_access"
+            or tags.get("locked") == "yes"
+            or tags.get("barrier") in PHYSICAL_BLOCKS
         ):
             hard_ways.add(str(row.osmid))
         if legal == "permit_required" and (
@@ -99,33 +131,91 @@ def permission_inventory(physical, source_dir, masks):
         roads.edge_u.isin(private_nodes) | roads.edge_v.isin(private_nodes)
     ).to_numpy()
     hard_endpoint = (roads.edge_u.isin(hard_nodes) | roads.edge_v.isin(hard_nodes)).to_numpy()
+    purpose_endpoint = (
+        roads.edge_u.isin(purpose_nodes) | roads.edge_v.isin(purpose_nodes)
+    ).to_numpy()
     strict_node = ~roads.node_access_blocked.to_numpy()
     flexible_node = (strict_node | private_endpoint) & ~hard_endpoint
     source_allowed = roads.source_way_motor_allowed.to_numpy()
+    direction_resolved = (
+        roads.get("direction_resolved", pd.Series(True, index=roads.index)).astype(bool).to_numpy()
+    )
     roads["baseline_motor_access_allowed"] = roads.motor_access_allowed
     roads["strict_motor_access_allowed"] = (
-        source_allowed & strict_node & ~unsupported & ~hard_endpoint
+        source_allowed & strict_node & ~unsupported & ~hard_endpoint & direction_resolved
     )
     roads["motor_access_allowed"] = (
-        (source_allowed | private_way.to_numpy()) & flexible_node & ~unsupported
+        (source_allowed | private_way.to_numpy())
+        & flexible_node
+        & ~unsupported
+        & direction_resolved
     )
     roads["delivery_authorization_assumed"] = private_way.to_numpy() | private_endpoint
     roads["node_access_blocked"] = ~flexible_node
     roads["sensitive_interior_road"] = roads.sensitive_interior_road | sensitive
     # Purpose restrictions permit delivery access but never public transit.
-    restricted_purpose = roads.legal_access_tier.eq("destination_or_customers")
+    restricted_purpose = roads.legal_access_tier.isin(["destination_or_customers", "delivery_only"])
     terminal = (
         roads.access_layer.eq("osm_terminal_only")
         | roads.delivery_authorization_assumed
         | restricted_purpose
+        | purpose_endpoint
     )
     roads.loc[terminal, "access_layer"] = "osm_terminal_only"
     roads["connector_crossing_barrier"] = ~roads.anchor_class_eligible | ~roads.motor_access_allowed
+    charging_allowed, charging_basis, charging_node_evidence = [], [], []
+    charging_tiers, charging_tags, charging_fields, charging_node_blocked = [], [], [], []
+    for row in roads.itertuples():
+        way = charging_ways[str(row.osmid)]
+        endpoints = [
+            dict(osmid=node, **charging_nodes[node])
+            for node in sorted({str(row.edge_u), str(row.edge_v)})
+            if node in charging_nodes
+        ]
+        node_blocked = any(not node["allowed"] for node in endpoints)
+        permitted = (
+            (bool(row.direction_resolved) if hasattr(row, "direction_resolved") else True)
+            and row.highway in OPERATING_ROAD_CLASSES
+            and way["allowed"]
+            and not node_blocked
+            and not bool(row.sensitive_interior_road)
+        )
+        if row.highway not in OPERATING_ROAD_CLASSES:
+            reason = "unsupported_operating_road_class"
+        elif not getattr(row, "direction_resolved", True):
+            reason = "unresolved_source_direction"
+        elif row.sensitive_interior_road:
+            reason = "excluded_facility_geometry"
+        elif not way["allowed"]:
+            reason = "way_" + (
+                "physical_block" if way["physical_block"] else way["legal_access_tier"]
+            )
+        elif node_blocked:
+            reason = "endpoint_generic_motor_access_blocked"
+        else:
+            reason = "source_generic_motor_permission_" + way["legal_access_tier"]
+        charging_allowed.append(bool(permitted))
+        charging_basis.append(reason)
+        charging_tiers.append(way["legal_access_tier"])
+        charging_fields.append(way["source_tag"])
+        charging_tags.append(json.dumps(way["source_tags"], sort_keys=True, separators=(",", ":")))
+        charging_node_evidence.append(json.dumps(endpoints, sort_keys=True, separators=(",", ":")))
+        charging_node_blocked.append(node_blocked)
+    roads["charging_motor_access_allowed"] = charging_allowed
+    roads["charging_access_basis"] = charging_basis
+    roads["charging_permission_requires_review"] = ~roads.charging_motor_access_allowed
+    roads["charging_way_access_tier"] = charging_tiers
+    roads["charging_way_access_source_tag"] = charging_fields
+    roads["charging_way_access_tags_json"] = charging_tags
+    roads["charging_node_access_evidence_json"] = charging_node_evidence
+    roads["charging_node_access_blocked"] = charging_node_blocked
     return roads, dict(
         private_node_count=len(private_nodes),
+        purpose_restricted_node_count=len(purpose_nodes),
         hard_node_count=len(hard_nodes),
         source_way_hard_count=len(hard_ways),
         private_sensitive_segment_count=int(sensitive.sum()),
+        charging_motor_access_allowed_segment_count=int(roads.charging_motor_access_allowed.sum()),
     )
 
 
@@ -140,19 +230,42 @@ def build_delivery_access_context(
     area_crs,
 ):
     seed_dir, source_dir, output_dir = Path(seed_dir), Path(source_dir), Path(output_dir)
-    output_dir.mkdir(parents=True, exist_ok=True)
     old = json.loads((seed_dir / "access_context_manifest.json").read_text())
+    if old.get("topology_contract") != TOPOLOGY_CONTRACT:
+        raise ValueError("Physical seed topology is stale; rebuild the physical seed")
+    validate_generation_dependencies(old)
     extraction = json.loads((source_dir / "extraction.json").read_text())
     if (
         extraction != old["source"]
         or extraction["pbf_replication_timestamp_utc"] != "2026-10-25T21:21:21Z"
     ):
         raise ValueError("Source road skeleton and requested snapshot differ")
+    if sha256_file(Path(admin_boundary_path)) != extraction["admin_boundary_sha256"]:
+        raise ValueError("Requested administrative boundary differs from road extraction")
+    required_outputs = {"osm_ways.parquet", "osm_access_nodes.parquet"}
+    if not required_outputs <= extraction["outputs"].keys():
+        raise ValueError("Road extraction lacks required source output hashes")
+    for name, digest in extraction["outputs"].items():
+        if sha256_file(source_dir / name) != digest:
+            raise ValueError("Changed road extraction: " + name)
+    for key, path in [
+        ("admin_boundary_sha256", admin_boundary_path),
+        ("service_boundary_sha256", service_boundary_path),
+        ("mask_sha256", mask_path),
+    ]:
+        if sha256_file(Path(path)) != old[key]:
+            raise ValueError("Physical seed differs from requested " + key)
+    if CRS.from_user_input(old["area_crs"]) != CRS.from_user_input(area_crs):
+        raise ValueError("Physical seed and requested metric CRS differ")
     seed_path = seed_dir / "physical_roads.parquet"
     if sha256_file(seed_path) != old["outputs"]["physical_roads.parquet"]:
         raise ValueError("Changed source road skeleton")
+    skeleton = gpd.read_parquet(seed_path)
+    if skeleton.crs != CRS.from_user_input(area_crs):
+        raise ValueError("Physical seed geometry has a different metric CRS")
     masks = gpd.read_parquet(mask_path)
-    physical, permissions = permission_inventory(gpd.read_parquet(seed_path), source_dir, masks)
+    physical, permissions = permission_inventory(skeleton, source_dir, masks)
+    output_dir.mkdir(parents=True, exist_ok=True)
     physical.to_parquet(output_dir / "physical_roads.parquet", index=False)
     graph = nx.MultiDiGraph(crs="EPSG:4326")
     wgs = physical.to_crs(4326)
@@ -184,6 +297,8 @@ def build_delivery_access_context(
                 through_routing_allowed=row.access_layer == "operational_public",
                 delivery_authorization_assumed=bool(row.delivery_authorization_assumed),
                 strict_motor_access_allowed=bool(row.strict_motor_access_allowed),
+                charging_motor_access_allowed=bool(row.charging_motor_access_allowed),
+                charging_access_basis=row.charging_access_basis,
                 maxspeed=row.maxspeed,
                 **{
                     "maxspeed:forward": row.maxspeed_forward,
@@ -224,7 +339,7 @@ def build_delivery_access_context(
         core.nodes[n]["transit_only"] = n not in citynodes
     for u, v, k, d in core.edges(keys=True, data=True):
         d["transit_only"] = u not in citynodes or v not in citynodes
-    reference = max(nx.strongly_connected_components(core), key=lambda c: (len(c), min(c)))
+    reference = min(nx.strongly_connected_components(core), key=lambda c: (-len(c), min(c)))
     access = nx.MultiDiGraph(crs="EPSG:4326")
     for u, v, k, d in graph.edges(keys=True, data=True):
         if u in reference and v in reference and d["through_routing_allowed"]:
@@ -253,6 +368,7 @@ def build_delivery_access_context(
     ]
     manifest = dict(
         schema="evrptw_delivery_terminal_access_v2",
+        topology_contract=TOPOLOGY_CONTRACT,
         policy=POLICY,
         city_slug=extraction["city_slug"],
         source=extraction,
@@ -273,10 +389,14 @@ def build_delivery_access_context(
         local_physical_segments=len(physical),
         terminal_through_routing_allowed=False,
         owner_permission_observed=False,
-        review_holds_sha256=sha256_file(HOLDS_PATH),
+        frontage_contract_sha256=sha256_file(FRONTAGE_PATH),
         generation_dependencies={
             "delivery_access.py": sha256_file(Path(__file__)),
+            "frontage.py": sha256_file(Path(__file__).with_name("frontage.py")),
             "local_road_access.py": sha256_file(Path(__file__).with_name("local_road_access.py")),
+            "terminal_access.py": sha256_file(Path(__file__).with_name("terminal_access.py")),
+            "road_tags.py": sha256_file(Path(__file__).with_name("road_tags.py")),
+            "public_locations.py": sha256_file(Path(__file__).with_name("public_locations.py")),
         },
         outputs={n: sha256_file(output_dir / n) for n in names},
     )
@@ -383,23 +503,7 @@ class DeliveryAccessContext(LocalAccessContext):
         )
         authorized = result.local_access_confirmed & result.delivery_authorization_assumed
         result.loc[authorized, "access_status"] = "modeled_authorized_terminal_roundtrip"
-        holds = json.loads(HOLDS_PATH.read_text())["records"]
-        hold_ids = {h["latent_service_location_id"] for h in holds}
-        held = result.latent_service_location_id.isin(hold_ids)
-        result["access_case_review_hold"] = held
-        result.loc[held, "access_review_reason"] = "review_hold_unverified_motor_access"
-        result.loc[held, "access_status"] = "review_required"
-        for c in [
-            "local_access_confirmed",
-            "protected_inbound_access_eligible",
-            "protected_outbound_access_eligible",
-            "protected_roundtrip_eligible",
-            "anchor_in_reference_scc",
-            "access_gateway_in_reference_scc",
-        ]:
-            result.loc[held, c] = False
-        result.loc[held, "anchor_scc_id"] = "S_UNRESOLVED"
-        result.loc[held, "protected_roundtrip_status"] = "review_required_local_access"
+        result = apply_frontage_guard(result, self.physical, self.area_crs)
         result["road_access_policy"] = POLICY
         return result
 

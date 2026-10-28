@@ -36,10 +36,21 @@ _KNOWN_CONNECTOR_KINDS = {
 _DEFAULT_LEGAL_ACCESS_TIERS = {
     "explicit_yes",
     "destination_or_customers",
+    "delivery_only",
     "permissive",
     "unspecified",
 }
 _MOTOR_ACCESS_PRECEDENCE = ("motorcar", "motor_vehicle", "vehicle", "access:delivery", "access")
+ACCESS_NODE_TAGS = (
+    "access",
+    "access:delivery",
+    "vehicle",
+    "motor_vehicle",
+    "motorcar",
+    "barrier",
+    "locked",
+)
+ACCESS_NODE_TAG_CONTRACT = "complete_way_restriction_barrier_delivery_lock_nodes_v3"
 
 
 def _normalized_values(value: Any) -> list[str]:
@@ -59,6 +70,16 @@ def _effective_motor_access(data: dict[str, Any]) -> tuple[str, str]:
             return field, "permit_required"
         if any(value in {"destination", "customers"} for value in values):
             return field, "destination_or_customers"
+        if "delivery" in values:
+            return field, "delivery_only"
+        if field == "access:delivery" and any(value in {"yes", "permissive"} for value in values):
+            # A delivery exception may override generic restrictions for the
+            # invited delivery, but cannot grant permission for public transit.
+            _, baseline = _effective_motor_access(
+                {key: value for key, value in data.items() if key != "access:delivery"}
+            )
+            if baseline not in {"explicit_yes", "permissive", "unspecified"}:
+                return field, "delivery_only"
         if "permissive" in values:
             return field, "permissive"
         if "yes" in values:
@@ -87,10 +108,10 @@ def classify_terminal_access_way(data: dict[str, Any]) -> dict[str, Any]:
         reason = "emergency_access_excluded"
     elif legal_tier == "prohibited":
         reason = "motor_access_prohibited"
-    elif "service" not in highways and legal_tier != "permit_required":
+    elif "service" not in highways and legal_tier not in {"permit_required", "delivery_only"}:
         # Public residential/living-street/unclassified roads already belong in
-        # graph_operational.  Only explicitly private examples need retention
-        # here for the permit-required sensitivity scenario.
+        # graph_operational. Private and delivery-only examples stay separate
+        # for the applicable permission/purpose-specific scenario.
         reason = "already_operational_or_not_terminal"
 
     candidate = reason == "eligible_terminal_way"
@@ -144,6 +165,10 @@ def _extract_terminal_candidate_graph(
             "w/vehicle=private",
             "w/motor_vehicle=private",
             "w/motorcar=private",
+            "w/access=delivery",
+            "w/vehicle=delivery",
+            "w/motor_vehicle=delivery",
+            "w/motorcar=delivery",
         ]
     )
     _run_osmium(

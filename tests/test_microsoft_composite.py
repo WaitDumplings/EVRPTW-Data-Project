@@ -50,3 +50,24 @@ def test_duplicate_and_overlapping_legacy_do_not_create_extra_stops():
     assert result["duplicate"].tolist() == [False, True, False, False]
     assert result["conflict"].tolist() == [True, False, True, False]
     assert result["masks"]["10.0"].tolist() == [False, False, False, True]
+
+
+def test_positive_area_nonpolygon_is_quarantined_and_still_guards_legacy_fill():
+    import geopandas as gpd
+    from shapely.geometry import GeometryCollection, LineString
+    from evrptw_cle.microsoft_composite import compose_footprints
+
+    nonpolygon = GeometryCollection([box(0, 0, 10, 10), LineString([(20, 20), (30, 30)])])
+    new = gpd.GeoDataFrame({"building_id": ["bad"]}, geometry=[nonpolygon], crs=3857)
+    old = gpd.GeoDataFrame(
+        {"building_id": ["guarded", "gap", "nonpolygon"]},
+        geometry=[box(20, 20, 25, 25), box(60, 0, 65, 5), nonpolygon],
+        crs=3857,
+    )
+    result = compose_footprints(new, old, area_crs=3857)
+    assert result["new_primary"].empty
+    assert len(result["new_geometry_quarantine"]) == 1
+    assert result["composite_footprints"].building_id.tolist() == ["legacyv2:gap"]
+    audit = result["legacy_admission_audit"].set_index("building_id")
+    assert not audit.loc["legacyv2:guarded", "admit_clearance_10m"]
+    assert not audit.loc["legacyv2:nonpolygon", "valid_geometry"]

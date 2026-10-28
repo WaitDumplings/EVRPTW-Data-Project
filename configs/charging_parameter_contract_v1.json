@@ -2,7 +2,6 @@
   "schema": "evrptw_charging_parameter_contract_v1",
   "status": "accepted_production_policy",
   "geographic_rule": "one common rule across all states; no city/state compatibility exception",
-  "location_pool_unchanged": 5694,
   "native_reference_vehicle": {
     "model": "2025 Rivian Commercial Van Delivery 700",
     "native_connectors": {
@@ -70,14 +69,6 @@
     "NREL_71198_actual_publication": "February 2019",
     "NREL_71198_evidence": "PDF page24, printed page16 models temperature and SOC-dependent DC power; no justification for a universal 0.90 power multiplier",
     "sensitivity": "0.85/0.90/0.95 closed-form charge-time comparison only; not routing/solver evidence"
-  },
-  "audit_result": {
-    "legacy_mismatch": 490,
-    "recoverable_j1772_same_record": 4,
-    "remaining_without_native_compatible_connector": 486,
-    "compatible_locations": 5208,
-    "conservative_reported_power_locations": 4964,
-    "conservative_imputed_power_locations": 244
   },
   "policy": "native_compatible_connector_power_v1",
   "unit_source": {

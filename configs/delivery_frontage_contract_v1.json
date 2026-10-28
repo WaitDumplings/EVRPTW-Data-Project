@@ -1,0 +1,14 @@
+{
+  "policy": "nearest_mapped_motor_frontage_guard_v1",
+  "unsupported_frontage_highways": [
+    "track",
+    "construction"
+  ],
+  "comparison_tolerance_m": 1e-06,
+  "rule": "If a mapped vehicle-road frontage outside the supported delivery classes is strictly nearer to the source extent than the selected supported road, preserve the source location as pending. A geometric line to a farther supported road is insufficient evidence to bypass that frontage.",
+  "pedestrian_only_highways": "Footway, path, steps and cycleway are not vehicle-road frontage evidence and do not trigger this guard.",
+  "location_id_exceptions": false,
+  "numeric_distance_rejection": false,
+  "source_deletion": false,
+  "pending_reason": "nearer_unsupported_motor_frontage"
+}

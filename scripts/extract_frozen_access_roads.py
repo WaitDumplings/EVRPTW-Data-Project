@@ -12,6 +12,7 @@ import osmium
 import shapely
 from shapely.geometry import LineString, Point
 
+from evrptw_cle.terminal_access import ACCESS_NODE_TAG_CONTRACT, ACCESS_NODE_TAGS
 from evrptw_cle.util import sha256_file, write_json
 
 
@@ -43,6 +44,7 @@ def extract_region(*, cohort_path, generator_root, output_root, region):
                 cached["pbf_sha256"] != digest
                 or cached["admin_boundary_sha256"] != boundary_record["sha256"]
                 or cached["pbf_replication_timestamp_utc"] != timestamp
+                or cached.get("access_node_tag_contract") != ACCESS_NODE_TAG_CONTRACT
             ):
                 raise FileExistsError("Cached extraction has different frozen inputs: " + city)
             for name, recorded in cached["outputs"].items():
@@ -61,6 +63,8 @@ def extract_region(*, cohort_path, generator_root, output_root, region):
             envelope=envelope,
             rows=[],
             nodes=[],
+            referenced_nodes=set(),
+            outside_envelope_access_nodes=0,
             boundary_path=boundary_path,
         )
     if not cities:
@@ -69,31 +73,11 @@ def extract_region(*, cohort_path, generator_root, output_root, region):
     processor = (
         osmium.FileProcessor(str(pbf))
         .with_locations()
-        .with_filter(osmium.filter.EntityFilter(osmium.osm.WAY | osmium.osm.NODE))
-        .with_filter(
-            osmium.filter.KeyFilter(
-                "highway", "access", "vehicle", "motor_vehicle", "motorcar", "barrier"
-            )
-        )
+        .with_filter(osmium.filter.EntityFilter(osmium.osm.WAY))
+        .with_filter(osmium.filter.KeyFilter("highway"))
     )
     for obj in processor:
         tags = dict(obj.tags)
-        if obj.is_node():
-            if not obj.location.valid() or not any(
-                k in tags for k in ["access", "vehicle", "motor_vehicle", "motorcar", "barrier"]
-            ):
-                continue
-            point = Point(obj.location.lon, obj.location.lat)
-            for values in cities.values():
-                if values["envelope"].covers(point):
-                    values["nodes"].append(
-                        dict(
-                            osmid=str(obj.id),
-                            tags_json=json.dumps(tags, sort_keys=True),
-                            geometry=point,
-                        )
-                    )
-            continue
         if "highway" not in tags:
             continue
         coords = [(n.lon, n.lat) for n in obj.nodes if n.location.valid()]
@@ -120,6 +104,34 @@ def extract_region(*, cohort_path, generator_root, output_root, region):
         for city in near:
             if cities[city]["envelope"].intersects(geometry):
                 cities[city]["rows"].append(record)
+                cities[city]["referenced_nodes"].update(n.ref for n in obj.nodes)
+    # Complete ways can curve or terminate outside the selection envelope. A
+    # second pass over the same frozen PBF retains every tagged restriction node
+    # they reference, rather than silently losing outside-envelope gates.
+    print("READ_RESTRICTION_NODES", region, flush=True)
+    node_processor = (
+        osmium.FileProcessor(str(pbf))
+        .with_filter(osmium.filter.EntityFilter(osmium.osm.NODE))
+        .with_filter(osmium.filter.KeyFilter(*ACCESS_NODE_TAGS))
+    )
+    for obj in node_processor:
+        if not obj.location.valid():
+            raise ValueError("Restriction node has no source coordinates: " + str(obj.id))
+        point = Point(obj.location.lon, obj.location.lat)
+        tags = dict(obj.tags)
+        record = dict(
+            osmid=str(obj.id),
+            tags_json=json.dumps(tags, sort_keys=True),
+            osm_object_version=obj.version,
+            osm_edit_timestamp=obj.timestamp.isoformat(),
+            geometry=point,
+        )
+        for values in cities.values():
+            inside = values["envelope"].covers(point)
+            if inside or obj.id in values["referenced_nodes"]:
+                values["nodes"].append(record)
+                if not inside:
+                    values["outside_envelope_access_nodes"] += 1
     for city, values in cities.items():
         dest = Path(output_root) / city
         dest.mkdir(parents=True, exist_ok=True)
@@ -127,7 +139,7 @@ def extract_region(*, cohort_path, generator_root, output_root, region):
         ways.to_parquet(dest / "osm_ways.parquet", index=False)
         nodes = gpd.GeoDataFrame(
             values["nodes"],
-            columns=["osmid", "tags_json", "geometry"],
+            columns=["osmid", "tags_json", "osm_object_version", "osm_edit_timestamp", "geometry"],
             geometry="geometry",
             crs=4326,
         )
@@ -136,6 +148,7 @@ def extract_region(*, cohort_path, generator_root, output_root, region):
             dest / "extraction.json",
             dict(
                 schema="evrptw_complete_osm_access_ways_v1",
+                access_node_tag_contract=ACCESS_NODE_TAG_CONTRACT,
                 city_slug=city,
                 region=region,
                 pbf_sha256=digest,
@@ -146,6 +159,11 @@ def extract_region(*, cohort_path, generator_root, output_root, region):
                 max_routing_buffer_km=20,
                 way_count=len(ways),
                 restricted_or_barrier_node_count=len(nodes),
+                outside_envelope_referenced_access_node_count=values[
+                    "outside_envelope_access_nodes"
+                ],
+                access_nodes_complete_for_retained_ways=True,
+                restriction_node_scan="second pass over the same frozen PBF; all tagged nodes used by retained complete ways, including outside the envelope",
                 outputs={
                     name: sha256_file(dest / name)
                     for name in ["osm_ways.parquet", "osm_access_nodes.parquet"]

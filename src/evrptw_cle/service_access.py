@@ -40,6 +40,9 @@ def materialize_active_service_graph(
         "travel_time_s",
         "legal_travel_time_s",
         "reference_travel_time_s",
+        "reference_travel_time_weekday_s",
+        "reference_travel_time_weekend_s",
+        "scenario_time_s",
     ),
 ) -> tuple[nx.MultiDiGraph, dict[str, Any]]:
     """Split referenced directed edges and attach a small active stop subset.

@@ -438,7 +438,11 @@ def _write_service_access_contract(anchored: gpd.GeoDataFrame, output_dir: Path)
         "access_permission_basis",
         "local_alternative_selected",
         "initial_access_review_reason",
-        "access_case_review_hold",
+        "frontage_policy",
+        "unsupported_frontage_nearer",
+        "unsupported_frontage_osmid",
+        "unsupported_frontage_highway",
+        "unsupported_frontage_distance_m",
     ]:
         if column in anchored:
             connectors[column] = anchored[column].to_numpy()

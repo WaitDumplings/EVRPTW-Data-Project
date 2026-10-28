@@ -10,7 +10,6 @@ import geopandas as gpd
 import pandas as pd
 
 LOCATION_POLICY = "afdc_shared_coordinate_complete_address_v1"
-UNVERIFIED_ACCESS_QUARANTINE_M = 1000.0
 ALIASES = dict(
     zip(
         [
@@ -73,9 +72,6 @@ def _text_conflict(row):
     embedded = [re.match(r"\s*(\d+)\s+[a-z]", part, re.IGNORECASE) for part in name.split("|")[1:]]
     if street_num and any(m and m.group(1) != street_num.group(1) for m in embedded):
         return "source_name_address_conflict"
-    distance = row.get("road_access_distance_m")
-    if pd.notna(distance) and float(distance) > UNVERIFIED_ACCESS_QUARANTINE_M:
-        return "road_coverage_or_access_unresolved_over_1000m"
     return ""
 
 

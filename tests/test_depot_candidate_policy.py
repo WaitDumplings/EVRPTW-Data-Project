@@ -85,3 +85,33 @@ def test_office_only_remains_b_even_for_known_carrier():
     assert module._evidence_tier(row, 0, 1000)[0] == "B_warehouse_proxy"
     row["logistics"] = "spaceflight"
     assert module._evidence_tier(row, 0, 1000)[0] == "C_industrial_proxy"
+
+
+def _touching_warehouse_groups(source_name=None):
+    import geopandas as gpd
+    from shapely.geometry import box
+
+    raw = gpd.GeoDataFrame(
+        {"source_osm_id": ["w1", "w2"], "building": ["warehouse", "warehouse"]},
+        geometry=[
+            box(-117.100, 32.800, -117.099, 32.801),
+            box(-117.099, 32.800, -117.098, 32.801),
+        ],
+        crs=4326,
+    )
+    if source_name is not None:
+        raw["name"] = source_name
+    boundary = gpd.GeoDataFrame(geometry=[box(-117.2, 32.7, -117.0, 32.9)], crs=4326)
+    result, _ = _module().build_public_depot_candidates(raw, boundary, "example", None)
+    return result
+
+
+def test_touching_unnamed_warehouses_do_not_share_display_name_identity():
+    result = _touching_warehouse_groups()
+    assert result.facility_name.eq("Unnamed warehouse").all()
+    assert result.facility_group_id.nunique() == 2
+
+
+def test_touching_warehouses_with_shared_source_name_keep_identity_merge():
+    result = _touching_warehouse_groups("Example Distribution Campus")
+    assert result.facility_group_id.nunique() == 1

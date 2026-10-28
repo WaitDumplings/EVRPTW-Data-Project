@@ -15,6 +15,12 @@ build/
 /artifacts/
 /outputs/
 /private/
+/evidence/
+/configs/phase1_sources.template.json
+/docs/PHASE1_AUDIT_ZH.md
+/docs/INTEGRATION_GATES.md
+/docs/STAGE1_CLE_ZH.md
+/docs/METHODS_ZH.md
 /work/
 *.osm.pbf
 *.graphml
@@ -25,5 +31,10 @@ build/
 *.zip
 *.tar*
 *.log
+*.build.lock
 /configs/customer_sources.json
 /configs/local*.json
+!/configs/local_road_access_contract_v2.json
+
+/configs/customer_sources.template.json
+/configs/road_extraction_cohort.template.json

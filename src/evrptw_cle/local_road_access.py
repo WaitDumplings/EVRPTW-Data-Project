@@ -29,13 +29,19 @@ from shapely.strtree import STRtree
 
 from .customer_access import attach_footprint_access
 from .road_tags import DELIVERY_ROAD_CLASSES, EXCLUDED_ANCHOR_ROAD_CLASSES
-from .terminal_access import _effective_motor_access, classify_terminal_access_way
+from .terminal_access import (
+    ACCESS_NODE_TAG_CONTRACT,
+    _effective_motor_access,
+    classify_terminal_access_way,
+)
 from .util import sha256_file, write_json
 
 POLICY = "local_first_real_osm_access_v1"
-MOTOR_CLASSES = DELIVERY_ROAD_CLASSES | EXCLUDED_ANCHOR_ROAD_CLASSES
+MOTOR_CLASSES = DELIVERY_ROAD_CLASSES | EXCLUDED_ANCHOR_ROAD_CLASSES | {"track"}
+OPERATING_ROAD_CLASSES = MOTOR_CLASSES - {"track", "construction", "proposed", "raceway"}
 BUFFER_LADDER_KM = (0, 1, 2, 5, 10, 20)
-PATH_GEOMETRY_POLICY = "metric_geometry_exact_projection_v1"
+PATH_GEOMETRY_POLICY = "metric_directional_offset_closed_way_v2"
+TOPOLOGY_CONTRACT = "source_direction_and_access_node_segmentation_v2"
 
 
 def repair_terminal_path_geometry(frame, physical):
@@ -70,7 +76,8 @@ def repair_terminal_path_geometry(frame, physical):
                 continue
             ref = route[-1] if direction == "inbound" else route[0]
             line = shapely.reverse(original) if ref["key"].endswith("r") else original
-            position = line.project(point)
+            fraction=float(ref["fraction"])
+            position=line.length * (fraction if direction=="inbound" else 1.0-fraction)
             part = (
                 substring(line, 0.0, position)
                 if direction == "inbound"
@@ -90,13 +97,13 @@ def classify_way(tags):
     terminal = classify_terminal_access_way(tags)
     layer = (
         "osm_terminal_only"
-        if highway == "service" or legal == "permit_required"
+        if highway == "service" or legal in {"permit_required", "delivery_only"}
         else "operational_public"
     )
     allowed = legal not in {"prohibited", "permit_required", "unresolved_tag_value"}
     if highway == "service":
         allowed = allowed and terminal["terminal_core_eligible"]
-    if highway in {"construction", "proposed", "raceway"}:
+    if highway not in OPERATING_ROAD_CLASSES:
         allowed = False
     return dict(
         highway=highway,
@@ -110,13 +117,31 @@ def classify_way(tags):
     )
 
 
-def _directions(tags):
-    value = tags.get("oneway", "").lower()
+def _direction_status(tags):
+    """Resolve static directions without guessing variable or unknown one-way tags."""
+    value = tags.get("oneway", "").strip().lower()
     if value in {"-1", "reverse"}:
+        return "explicit_reverse"
+    if value in {"yes", "true", "1"}:
+        return "explicit_forward"
+    if value in {"no", "false", "0"}:
+        return "explicit_bidirectional"
+    if value:
+        return "unresolved_oneway_value"
+    if tags.get("highway") == "motorway":
+        return "implied_motorway_forward"
+    if tags.get("junction") in {"roundabout", "circular"}:
+        return "implied_junction_forward"
+    return "default_bidirectional"
+
+
+def _directions(tags):
+    status = _direction_status(tags)
+    if status == "explicit_reverse":
         return (False, True)
-    if value in {"yes", "true", "1"} or (
-        value not in {"no", "false", "0"} and tags.get("junction") in {"roundabout", "circular"}
-    ):
+    if status == "unresolved_oneway_value":
+        return (False, False)
+    if status in {"explicit_forward", "implied_motorway_forward", "implied_junction_forward"}:
         return (True, False)
     return (True, True)
 
@@ -150,13 +175,20 @@ def build_access_context(
     """Build reproducible public/access graphs and the local physical inventory."""
     source_dir = Path(source_dir)
     output_dir = Path(output_dir)
-    output_dir.mkdir(parents=True, exist_ok=True)
     extraction = json.loads((source_dir / "extraction.json").read_text())
     if extraction["pbf_replication_timestamp_utc"] != "2026-10-25T21:21:21Z":
         raise ValueError("Unaccepted road snapshot")
+    if extraction.get("access_node_tag_contract") != ACCESS_NODE_TAG_CONTRACT:
+        raise ValueError("Road extraction access-node tags are stale; re-extract frozen PBF")
+    if sha256_file(Path(admin_boundary_path)) != extraction["admin_boundary_sha256"]:
+        raise ValueError("Requested administrative boundary differs from road extraction")
+    required_outputs = {"osm_ways.parquet", "osm_access_nodes.parquet"}
+    if not required_outputs <= extraction["outputs"].keys():
+        raise ValueError("Road extraction lacks required source output hashes")
     for name, digest in extraction["outputs"].items():
         if sha256_file(source_dir / name) != digest:
             raise ValueError("Changed road extraction: " + name)
+    output_dir.mkdir(parents=True, exist_ok=True)
     admin = gpd.read_file(admin_boundary_path).to_crs(area_crs).geometry.union_all()
     nodes = gpd.read_parquet(source_dir / "osm_access_nodes.parquet")
     blocked_nodes = set(
@@ -185,7 +217,11 @@ def build_access_context(
         parsed.append((row.osmid, ids, coords, tags, kind))
     del ways
     gc.collect()
-    junctions = {n for n, count in usage.items() if count > 1} | blocked_nodes
+    # Keep every extracted restriction/barrier node as a segment endpoint.
+    # Delivery policy evaluates hard physical barriers independently of access
+    # tags, including barrier=bollard with no access tag on an interior node.
+    access_nodes = {str(node) for node in nodes.osmid}
+    junctions = {n for n, count in usage.items() if count > 1} | access_nodes
     graph = nx.MultiDiGraph(crs="EPSG:4326")
     records = []
     metric_geometries = []
@@ -217,6 +253,9 @@ def build_access_context(
                 allowed = allowed and not mask_hit
             refs = []
             forward, backward = _directions(tags)
+            direction_status = _direction_status(tags)
+            direction_resolved = forward or backward
+            allowed = allowed and direction_resolved
             for reversed_, a, b in [(False, u, v), (True, v, u)]:
                 if (reversed_ and not backward) or (not reversed_ and not forward):
                     continue
@@ -239,15 +278,18 @@ def build_access_context(
                 physical_edge_id=identity,
                 directed_edge_refs=json.dumps(refs, sort_keys=True),
                 directed_edge_ref_count=len(refs),
-                edge_u=refs[0]["u"],
-                edge_v=refs[0]["v"],
-                edge_key=refs[0]["key"],
+                edge_u=refs[0]["u"] if refs else u,
+                edge_v=refs[0]["v"] if refs else v,
+                edge_key=refs[0]["key"] if refs else identity + "_unresolved_direction",
                 highway=kind["highway"],
                 road_name=tags.get("name", ""),
                 oneway=not (forward and backward),
+                source_oneway=tags.get("oneway", ""),
+                direction_status=direction_status,
+                direction_resolved=bool(direction_resolved),
                 **{k: kind[k] for k in ["access_layer", "connector_kind", "legal_access_tier"]},
                 motor_access_allowed=allowed,
-                source_way_motor_allowed=kind["allowed"],
+                source_way_motor_allowed=kind["allowed"] and bool(direction_resolved),
                 node_access_blocked=any(n in blocked_nodes for n in ids[start : end + 1]),
                 sensitive_interior_road=mask_hit,
                 anchor_class_eligible=kind["anchor_class_eligible"],
@@ -328,7 +370,7 @@ def build_access_context(
         core.nodes[n]["transit_only"] = n not in citynodes
     for u, v, k, data in core.edges(keys=True, data=True):
         data["transit_only"] = u not in citynodes or v not in citynodes
-    reference = max(nx.strongly_connected_components(core), key=lambda c: (len(c), min(c)))
+    reference = min(nx.strongly_connected_components(core), key=lambda c: (-len(c), min(c)))
     # The terminal graph keeps only non-public-core edges. Its trees terminate
     # at public SCC gateways, so terminal roads never connect two through nodes.
     access = nx.MultiDiGraph(crs="EPSG:4326")
@@ -351,6 +393,7 @@ def build_access_context(
     ox.save_graphml(raw, output_dir / "graph_all.graphml")
     manifest = dict(
         schema="evrptw_local_first_road_access_v1",
+        topology_contract=TOPOLOGY_CONTRACT,
         policy=POLICY,
         city_slug=extraction["city_slug"],
         source=extraction,
@@ -369,6 +412,11 @@ def build_access_context(
         local_physical_segments=len(physical),
         terminal_through_routing_allowed=False,
         synthetic_intercomponent_edges=False,
+        generation_dependencies={
+            "local_road_access.py": sha256_file(Path(__file__)),
+            "terminal_access.py": sha256_file(Path(__file__).with_name("terminal_access.py")),
+            "road_tags.py": sha256_file(Path(__file__).with_name("road_tags.py")),
+        },
         outputs={
             name: sha256_file(output_dir / name)
             for name in [
@@ -417,10 +465,10 @@ class LocalAccessContext:
 
             return DeliveryAccessContext.load(dest)
         if m.get("policy") == "delivery_terminal_access_v2":
-            from .delivery_access import HOLDS_PATH
+            from .frontage import FRONTAGE_PATH
 
-            if sha256_file(HOLDS_PATH) != m["review_holds_sha256"]:
-                raise ValueError("Changed delivery access review holds; rebuild context explicitly")
+            if sha256_file(FRONTAGE_PATH) != m.get("frontage_contract_sha256"):
+                raise ValueError("Changed delivery frontage contract; rebuild context explicitly")
         for name, digest in m["outputs"].items():
             if sha256_file(dest / name) != digest:
                 raise ValueError("Changed access context " + name)
@@ -521,6 +569,9 @@ class LocalAccessContext:
         frame["sensitive_interior_road"] = frame.physical_edge_id.map(
             info.sensitive_interior_road
         ).astype(bool)
+        for column in ["source_oneway", "direction_status", "direction_resolved"]:
+            if column in info:
+                frame[column] = frame.physical_edge_id.map(info[column])
         incoming = []
         outgoing = []
         in_roots = []
@@ -528,11 +579,8 @@ class LocalAccessContext:
         in_lengths = []
         out_lengths = []
         reasons = []
-        metric_anchors = gpd.GeoSeries(
-            gpd.points_from_xy(frame.road_anchor_lon, frame.road_anchor_lat), crs=4326
-        ).to_crs(self.area_crs)
         to_graph = Transformer.from_crs(self.area_crs, self.core.graph["crs"], always_xy=True)
-        for row, metric_anchor in zip(frame.itertuples(), metric_anchors):
+        for row in frame.itertuples():
             choices_in = []
             choices_out = []
             for ref in json.loads(row.directed_projection_offsets):
@@ -558,7 +606,12 @@ class LocalAccessContext:
                     geom = info.geometry[row.physical_edge_id]
                     if ref["geometry_orientation"] == "reverse_of_physical":
                         geom = shapely.reverse(geom)
-                    position = geom.project(metric_anchor)
+                    # A closed way has the same coordinate at offsets zero
+                    # and length. Reprojecting the anchor cannot distinguish
+                    # these two directed positions and may draw a full loop
+                    # for a zero-length partial edge. Use the exact metric
+                    # directional offset already used for its cost instead.
+                    position = geom.length * min(max(float(ref["offset_from_u_m"]) / float(ref["length_m"]),0.0),1.0)
                     partgeom = (
                         substring(geom, 0.0, position)
                         if target is choices_in
@@ -607,6 +660,8 @@ class LocalAccessContext:
             out_lengths.append(cout[0])
             if row.sensitive_interior_road:
                 reason = "local_road_within_excluded_facility"
+            elif not getattr(row, "direction_resolved", True):
+                reason = "local_road_direction_unresolved"
             elif not row.motor_access_allowed:
                 reason = "local_road_" + (
                     "node_access_restricted" if row.node_access_blocked else row.legal_access_tier
