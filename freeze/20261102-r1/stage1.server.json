@@ -1,0 +1,133 @@
+{
+  "schema": "evrptw_building_first_stage1_v1",
+  "output": "../../outputs/stage1-20261102-r1",
+  "axis_r": 0.2853432473555575,
+  "cities": {
+    "new-york": {
+      "microsoft": "../../inputs/stage1_20261102/customer/new-york/microsoft_footprints.parquet",
+      "osm": "../../inputs/stage1_20261102/customer/new-york/osm_buildings.parquet",
+      "nsi": "../../inputs/stage1_20261102/customer/new-york/nsi_native.parquet",
+      "area_crs": "EPSG:32618",
+      "service_boundary": "../../inputs/stage1_20261102/archive/boundaries/new-york/land_boundary.geojson",
+      "admin_boundary": "../../inputs/stage1_20261102/archive/boundaries/new-york/admin_boundary.geojson"
+    },
+    "los-angeles": {
+      "microsoft": "../../inputs/stage1_20261102/customer/los-angeles/microsoft_footprints.parquet",
+      "osm": "../../inputs/stage1_20261102/customer/los-angeles/osm_buildings.parquet",
+      "nsi": "../../inputs/stage1_20261102/customer/los-angeles/nsi_native.parquet",
+      "area_crs": "EPSG:32611",
+      "service_boundary": "../../inputs/stage1_20261102/archive/boundaries/los-angeles/land_boundary.geojson",
+      "admin_boundary": "../../inputs/stage1_20261102/archive/boundaries/los-angeles/admin_boundary.geojson"
+    },
+    "chicago": {
+      "microsoft": "../../inputs/stage1_20261102/customer/chicago/microsoft_footprints.parquet",
+      "osm": "../../inputs/stage1_20261102/customer/chicago/osm_buildings.parquet",
+      "nsi": "../../inputs/stage1_20261102/customer/chicago/nsi_native.parquet",
+      "area_crs": "EPSG:32616",
+      "service_boundary": "../../inputs/stage1_20261102/archive/boundaries/chicago/land_boundary.geojson",
+      "admin_boundary": "../../inputs/stage1_20261102/archive/boundaries/chicago/admin_boundary.geojson"
+    },
+    "houston": {
+      "microsoft": "../../inputs/stage1_20261102/customer/houston/microsoft_footprints.parquet",
+      "osm": "../../inputs/stage1_20261102/customer/houston/osm_buildings.parquet",
+      "nsi": "../../inputs/stage1_20261102/customer/houston/nsi_native.parquet",
+      "area_crs": "EPSG:32615",
+      "service_boundary": "../../inputs/stage1_20261102/archive/boundaries/houston/land_boundary.geojson",
+      "admin_boundary": "../../inputs/stage1_20261102/archive/boundaries/houston/admin_boundary.geojson"
+    },
+    "phoenix": {
+      "microsoft": "../../inputs/stage1_20261102/customer/phoenix/microsoft_footprints.parquet",
+      "osm": "../../inputs/stage1_20261102/customer/phoenix/osm_buildings.parquet",
+      "nsi": "../../inputs/stage1_20261102/customer/phoenix/nsi_native.parquet",
+      "area_crs": "EPSG:32612",
+      "service_boundary": "../../inputs/stage1_20261102/archive/boundaries/phoenix/land_boundary.geojson",
+      "admin_boundary": "../../inputs/stage1_20261102/archive/boundaries/phoenix/admin_boundary.geojson"
+    },
+    "philadelphia": {
+      "microsoft": "../../inputs/stage1_20261102/customer/philadelphia/microsoft_footprints.parquet",
+      "osm": "../../inputs/stage1_20261102/customer/philadelphia/osm_buildings.parquet",
+      "nsi": "../../inputs/stage1_20261102/customer/philadelphia/nsi_native.parquet",
+      "area_crs": "EPSG:32618",
+      "service_boundary": "../../inputs/stage1_20261102/archive/boundaries/philadelphia/land_boundary.geojson",
+      "admin_boundary": "../../inputs/stage1_20261102/archive/boundaries/philadelphia/admin_boundary.geojson"
+    },
+    "san-antonio": {
+      "microsoft": "../../inputs/stage1_20261102/customer/san-antonio/microsoft_footprints.parquet",
+      "osm": "../../inputs/stage1_20261102/customer/san-antonio/osm_buildings.parquet",
+      "nsi": "../../inputs/stage1_20261102/customer/san-antonio/nsi_native.parquet",
+      "area_crs": "EPSG:32614",
+      "service_boundary": "../../inputs/stage1_20261102/archive/boundaries/san-antonio/land_boundary.geojson",
+      "admin_boundary": "../../inputs/stage1_20261102/archive/boundaries/san-antonio/admin_boundary.geojson"
+    },
+    "san-diego": {
+      "microsoft": "../../inputs/stage1_20261102/customer/san-diego/microsoft_footprints.parquet",
+      "osm": "../../inputs/stage1_20261102/customer/san-diego/osm_buildings.parquet",
+      "nsi": "../../inputs/stage1_20261102/customer/san-diego/nsi_native.parquet",
+      "area_crs": "EPSG:32611",
+      "service_boundary": "../../inputs/stage1_20261102/archive/boundaries/san-diego/land_boundary.geojson",
+      "admin_boundary": "../../inputs/stage1_20261102/archive/boundaries/san-diego/admin_boundary.geojson"
+    },
+    "dallas": {
+      "microsoft": "../../inputs/stage1_20261102/customer/dallas/microsoft_footprints.parquet",
+      "osm": "../../inputs/stage1_20261102/customer/dallas/osm_buildings.parquet",
+      "nsi": "../../inputs/stage1_20261102/customer/dallas/nsi_native.parquet",
+      "area_crs": "EPSG:32614",
+      "service_boundary": "../../inputs/stage1_20261102/archive/boundaries/dallas/land_boundary.geojson",
+      "admin_boundary": "../../inputs/stage1_20261102/archive/boundaries/dallas/admin_boundary.geojson"
+    },
+    "jacksonville": {
+      "microsoft": "../../inputs/stage1_20261102/customer/jacksonville/microsoft_footprints.parquet",
+      "osm": "../../inputs/stage1_20261102/customer/jacksonville/osm_buildings.parquet",
+      "nsi": "../../inputs/stage1_20261102/customer/jacksonville/nsi_native.parquet",
+      "area_crs": "EPSG:32617",
+      "service_boundary": "../../inputs/stage1_20261102/archive/boundaries/jacksonville/land_boundary.geojson",
+      "admin_boundary": "../../inputs/stage1_20261102/archive/boundaries/jacksonville/admin_boundary.geojson"
+    },
+    "fort-worth": {
+      "microsoft": "../../inputs/stage1_20261102/customer/fort-worth/microsoft_footprints.parquet",
+      "osm": "../../inputs/stage1_20261102/customer/fort-worth/osm_buildings.parquet",
+      "nsi": "../../inputs/stage1_20261102/customer/fort-worth/nsi_native.parquet",
+      "area_crs": "EPSG:32614",
+      "service_boundary": "../../inputs/stage1_20261102/archive/boundaries/fort-worth/land_boundary.geojson",
+      "admin_boundary": "../../inputs/stage1_20261102/archive/boundaries/fort-worth/admin_boundary.geojson"
+    }
+  },
+  "components": {
+    "inventory": "../../configs/phase1_sources.template.json",
+    "source_root": "../../inputs/stage1_20261102/archive",
+    "road_sources": "../../inputs/stage1_20261102/roads"
+  },
+  "construction": {
+    "roads": {
+      "selection_buffer_km": 20,
+      "allow_private_through": true,
+      "facility_masks": false
+    }
+  },
+  "customer": {
+    "active_profile": "unrestricted",
+    "include_model_imputed": true
+  },
+  "units": {
+    "seed": 20261102,
+    "block_m": 2000,
+    "train_pct": 80,
+    "cal_pct": 10,
+    "test_pct": 10,
+    "k": 8,
+    "scale_probe_count": 2000,
+    "calibration_per_city": 5000,
+    "quality_target_retention": 0.95,
+    "quality_min_group_size": 30,
+    "quality_min_neighbors": 8,
+    "quality_dispersion_column": "neighbor_log_spread_90",
+    "min_reference_count": 1,
+    "min_unit_area_m2": 10.0,
+    "floor_to_floor_m": 3.048
+  },
+  "source_snapshots": {
+    "microsoft_index": "2026-08-13",
+    "osm": "2026-10-25",
+    "nsi_archive": "2026-10-26"
+  }
+}

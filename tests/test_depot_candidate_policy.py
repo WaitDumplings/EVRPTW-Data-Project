@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import json
+
 import pandas as pd
 
 
@@ -115,3 +117,55 @@ def test_touching_unnamed_warehouses_do_not_share_display_name_identity():
 def test_touching_warehouses_with_shared_source_name_keep_identity_merge():
     result = _touching_warehouse_groups("Example Distribution Campus")
     assert result.facility_group_id.nunique() == 1
+
+
+def test_depot_source_tags_preserve_native_dictionary_and_present_permission_fields():
+    import geopandas as gpd
+    from shapely.geometry import Point, box
+
+    native = {
+        "motorcar": "yes",
+        "access:delivery": "yes",
+        "access": "private",
+        "operator:wikidata": "Q123",
+        "source:permission": "original snapshot",
+    }
+    raw = gpd.GeoDataFrame(
+        {"source_osm_id": ["n1"], "building": ["warehouse"],
+         "motor_vehicle": ["permissive"], "osm_tags_json": [json.dumps(native)]},
+        geometry=[Point(-117.1, 32.8)], crs=4326,
+    )
+    boundary = gpd.GeoDataFrame(geometry=[box(-117.2, 32.7, -117., 32.9)], crs=4326)
+    result, _ = _module().build_public_depot_candidates(raw, boundary, "example", None)
+    tags = json.loads(result.osm_tags_json.iloc[0])
+    assert all(tags[key] == value for key, value in native.items())
+    assert tags["motor_vehicle"] == "permissive"
+    assert "locked" not in tags  # An absent source tag must not be invented.
+    assert "facility_name" not in tags  # Generated display labels are not raw tags.
+
+
+def test_native_depot_delivery_prohibition_is_used_before_candidate_admission():
+    row = pd.Series({"building": "warehouse", "osm_tags_json": json.dumps(
+        {"motorcar": "yes", "access:delivery": "no"})})
+    tier, reason, _ = _module()._evidence_tier(row, 1000., 1000.)
+    assert tier == "C_industrial_proxy"
+    assert reason == "excluded by public-location policy"
+
+
+def test_flat_native_depot_properties_are_captured_before_derived_columns():
+    import geopandas as gpd
+    from shapely.geometry import Point, box
+
+    raw = gpd.GeoDataFrame(
+        {"source_osm_id": ["n1"], "source_osm_url": ["https://www.openstreetmap.org/node/1"],
+         "building": ["warehouse"], "operator:variant": ["regional division"],
+         "old_filter_hit": [True], "osm_object_version": [4],
+         "osm_edit_timestamp": ["2026-10-01T00:00:00Z"], "geometry_priority": [2]},
+        geometry=[Point(-117.1, 32.8)], crs=4326,
+    )
+    boundary = gpd.GeoDataFrame(geometry=[box(-117.2, 32.7, -117., 32.9)], crs=4326)
+    result, _ = _module().build_public_depot_candidates(raw, boundary, "example", None)
+    tags = json.loads(result.osm_tags_json.iloc[0])
+    assert tags == {"building": "warehouse", "operator:variant": "regional division"}
+    assert result.facility_name.iloc[0] == "Unnamed warehouse"
+    assert "osm_tags_json" not in raw  # The source table itself stays unchanged.

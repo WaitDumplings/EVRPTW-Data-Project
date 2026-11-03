@@ -9,14 +9,19 @@ import shapely
 
 from .local_road_access import LocalAccessContext, _forest
 from .frontage import apply_frontage_guard
+from .public_locations import masks_for_purpose
 
-POLICY = "charging_generic_motor_access_v1"
+POLICY = "charging_generic_motor_access_v2_purpose_scoped_masks"
 
 
 class ChargingAccessContext(LocalAccessContext):
     policy = POLICY
 
     def anchor(self, locations, **kwargs):
+        if not getattr(self, "facility_masks", True):
+            from .current_access import access_only_masks
+            kwargs["masks"] = access_only_masks(kwargs.get("masks"))
+        kwargs["masks"] = masks_for_purpose(kwargs.get("masks"), "charging")
         result = super().anchor(locations, **kwargs)
         evidence = self.physical.set_index("physical_edge_id")
         for column in [
@@ -51,6 +56,8 @@ def build_charging_access_context(delivery_context):
     if not required <= set(physical.columns):
         raise ValueError("Road context lacks charging-purpose permission evidence; rebuild roads")
     physical["motor_access_allowed"] = physical.charging_motor_access_allowed.astype(bool)
+    if "charging_native_area_access_prohibited" in physical:
+        physical["native_area_access_prohibited"] = physical.charging_native_area_access_prohibited
     physical["delivery_legal_access_tier"] = physical.legal_access_tier
     physical["legal_access_tier"] = physical.charging_way_access_tier
     physical["source_way_motor_allowed"] = physical.motor_access_allowed
@@ -103,7 +110,7 @@ def build_charging_access_context(delivery_context):
                 charging_access_basis=row.charging_access_basis,
             )
     gateways = set(access) & reference
-    return ChargingAccessContext(
+    result = ChargingAccessContext(
         core,
         access,
         physical,
@@ -113,3 +120,9 @@ def build_charging_access_context(delivery_context):
         delivery_context.area_crs,
         delivery_context.water,
     )
+    result.facility_masks = getattr(delivery_context, "facility_masks", True)
+    result.allow_private_through = getattr(delivery_context, "allow_private_through", False)
+    if not result.facility_masks:
+        from .current_access import CURRENT_CHARGING_POLICY
+        result.policy = CURRENT_CHARGING_POLICY
+    return result

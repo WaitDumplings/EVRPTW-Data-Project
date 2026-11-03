@@ -21,7 +21,7 @@ from .charging_parameters import PARAMETER_POLICY, select_reference_configuratio
 from .context_validation import validate_context_bindings
 from .facilities import _normalize_chargers
 from .local_road_access import LocalAccessContext
-from .public_locations import filter_public_locations
+from .public_locations import filter_public_locations, masks_for_purpose
 from .runtime_paths import CONFIG_ROOT
 from .util import sha256_file, write_json
 
@@ -58,6 +58,7 @@ def _dependencies():
         "terminal_access.py",
         "road_tags.py",
         "frontage.py",
+        "current_access.py",
     ]
     return {name: sha256_file(Path(__file__).with_name(name)) for name in names}
 
@@ -103,7 +104,13 @@ def build_charging_layers(
     service = boundary.to_crs(4326).geometry.union_all()
     points = points.loc[points.geometry.covered_by(service)].copy().reset_index(drop=True)
     points["city_slug"] = city_slug
-    points, source_filter = filter_public_locations(points, masks)
+    facility_categories = getattr(context, "facility_masks", True)
+    if not facility_categories:
+        from .current_access import access_only_masks
+        masks = access_only_masks(masks)
+    masks = masks_for_purpose(masks, "charging")
+    points, source_filter = filter_public_locations(points, masks, purpose="charging",
+                                                   facility_categories=facility_categories)
     points = _normalize_chargers(points)
     points["charger_candidate_eligible"] = points.coordinate_candidate_eligible.astype(
         bool
@@ -114,7 +121,7 @@ def build_charging_layers(
     members["source_location_eligible"] = members.charger_candidate_eligible
     locations["potential_location_eligible"] = locations.charger_candidate_eligible
     locations, members, configurations, parameters = select_reference_configurations(
-        locations, members, units, medians
+        locations, members, units, medians, facility_categories=facility_categories
     )
     locations["reference_vehicle_compatible"] = locations.reference_vehicle_eligible
     if len(locations):
@@ -252,9 +259,14 @@ def build_charging_component(
     stations = pd.read_csv(station_path, low_memory=False, dtype={"ZIP": str})
     units = pd.read_csv(units_path, low_memory=False, dtype={"ZIP": str})
     census = pd.read_csv(census_path, low_memory=False) if census_path is not None else None
-    masks = gpd.read_parquet(mask_path)
+    masks = gpd.read_parquet(mask_path) if mask_path is not None else None
     boundary = gpd.read_file(boundary_path)
     footprints = gpd.read_parquet(footprints_path) if footprints_path is not None else None
+    medians = contract["new_national_medians_kw"]
+    national_median_counts = None
+    if not getattr(context, "facility_masks", True):
+        from .charging_parameters import national_port_weighted_power_medians
+        medians, national_median_counts = national_port_weighted_power_medians(units)
     locations, members, configurations, audit, access = build_charging_layers(
         stations,
         units,
@@ -262,7 +274,7 @@ def build_charging_component(
         masks=masks,
         boundary=boundary,
         city_slug=city_slug,
-        medians=contract["new_national_medians_kw"],
+        medians=medians,
         census_results=census,
         footprints=footprints,
     )
@@ -276,7 +288,7 @@ def build_charging_component(
             ("masks", mask_path),
             ("road_context", road_manifest_path),
             ("parameter_contract", contract_path),
-        ]
+        ] if path is not None
     }
     if census_path is not None:
         inputs["census"] = _input(census_path)
@@ -302,6 +314,8 @@ def build_charging_component(
             "status": "current_common_graph_component_not_whole_CLE_release",
             "inputs": inputs,
             "source_provenance": sources,
+            "national_power_medians_kw": medians,
+            "national_power_median_source_counts": national_median_counts,
             "road_source": road_manifest["source"],
             "road_context_outputs": road_manifest["outputs"],
             "generation_dependencies": _dependencies(),

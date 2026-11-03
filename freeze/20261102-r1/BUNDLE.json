@@ -1,0 +1,11 @@
+{
+  "freeze_id": "stage1-20261102-r1",
+  "archive": "dist/stage1-20261102-r1.tar.gz",
+  "sha256": "cc85040c52c6653064219c49e5f167a27d6e1ba242320989b7e3cf0aac2d0b94",
+  "bytes": 819226,
+  "manifest_sha256": "9db2933e7f83ffce3b3917dbad8942111db19683066e9b69d603f455fc34cfde",
+  "files": 213,
+  "top_level": "EVRPTW-Stage1-stage1-20261102-r1",
+  "raw_inputs_included": false,
+  "input_bytes": 2807236223
+}

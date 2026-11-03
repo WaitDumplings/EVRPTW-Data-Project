@@ -21,7 +21,7 @@ import pandas as pd
 from shapely.strtree import STRtree
 
 PUBLIC_LOCATION_POLICY = {
-    "version": "public_location_exclusions_v1",
+    "version": "public_location_exclusions_v4_geometry_scope",
     "excluded_categories": [
         "military",
         "intelligence",
@@ -33,6 +33,9 @@ PUBLIC_LOCATION_POLICY = {
     "civil_airports_and_ports_allowed": True,
     "private_commercial_sites_allowed": True,
     "sensitive_point_buffer_m": 50.0,
+    "motor_prohibited_barrier_nodes_are_area_masks": False,
+    "mask_scope": "delivery_only or all_motor; legacy absent scope means all_motor",
+    "territorial_boundary_text_is_facility_evidence": False,
     "spatial_match": "source geometry intersects excluded facility area or buffered sensitive POI",
     "export_removed_locations": False,
 }
@@ -53,6 +56,8 @@ PUBLIC_MASK_OSMIUM_FILTERS = [
     "nwr/motorcar=no",
     "nwr/vehicle=no",
     "nwr/access=no",
+    # Delivery-only gate nodes restrict incident roads, not a 50 m neighbourhood.
+    "wr/access:delivery",
     "nwr/name",
     "nwr/operator",
 ]
@@ -123,6 +128,11 @@ _TAG_FIELDS = (
     "access",
     "access:delivery",
     "motor_vehicle:conditional",
+    "barrier",
+    "boundary",
+    "place",
+    "type",
+    "admin_level",
 )
 
 
@@ -132,7 +142,8 @@ def _text(value: Any) -> str:
     return str(value).strip()
 
 
-def location_tags(row: Any) -> dict[str, str]:
+def source_osm_tags(row: Any) -> dict[str, str]:
+    """Read a source tag dictionary without adding derived display fields."""
     values = row.to_dict() if hasattr(row, "to_dict") else dict(row)
     result = {}
     encoded = values.get("osm_tags_json")
@@ -145,6 +156,12 @@ def location_tags(row: Any) -> dict[str, str]:
             result.update(json.loads(encoded))
         except (ValueError, TypeError):
             pass
+    return result
+
+
+def location_tags(row: Any) -> dict[str, str]:
+    values = row.to_dict() if hasattr(row, "to_dict") else dict(row)
+    result = source_osm_tags(values)
     for key in _TEXT_FIELDS + _TAG_FIELDS:
         value = _text(values.get(key))
         if value:
@@ -152,7 +169,23 @@ def location_tags(row: Any) -> dict[str, str]:
     return result
 
 
-def excluded_location_reason(row: Any) -> str:
+def explicit_delivery_prohibited(tags: Any) -> bool:
+    """A delivery-purpose prohibition is independent of vehicle permission."""
+    value = tags.get("access:delivery")
+    values = value if isinstance(value, (list, tuple)) else (value,)
+    return any(_text(item).lower() in {"no", "prohibited", "none"} for item in values)
+
+
+def is_territorial_boundary(tags: Any) -> bool:
+    """Recognize explicit jurisdiction tags, independently of names/operators."""
+    return _text(tags.get("boundary")).lower() in {"administrative", "police"} or (
+        _text(tags.get("place")).lower() == "police_beat"
+    )
+
+
+def excluded_location_reason(row: Any, *, purpose: str = "delivery") -> str:
+    if purpose not in {"delivery", "charging"}:
+        raise ValueError("Unknown motor-access purpose: " + purpose)
     tags = location_tags(row)
 
     def get(key):
@@ -188,15 +221,25 @@ def excluded_location_reason(row: Any) -> str:
         or get("nuclear") not in {"", "no", "false", "0"}
     ):
         return "nuclear"
-    haystack = " ".join(_text(tags.get(key)) for key in _TEXT_FIELDS)
-    for reason, pattern in _TEXT_PATTERNS:
-        if pattern.search(haystack):
-            return reason
-    # Specific vehicle/delivery permission overrides a generic access tag.
+    # A named/operator jurisdiction is not an occupied facility. Explicit
+    # facility tags above still apply, and access bans below remain independent.
+    if not is_territorial_boundary(tags):
+        haystack = " ".join(_text(tags.get(key)) for key in _TEXT_FIELDS)
+        for reason, pattern in _TEXT_PATTERNS:
+            if pattern.search(haystack):
+                return reason
+    # Permission for a vehicle does not waive a prohibition on its purpose.
+    if purpose == "delivery" and explicit_delivery_prohibited(tags):
+        return "motor_access_prohibited"
+    # Specific vehicle permission overrides a generic access tag. The existing
+    # delivery=yes exception remains below specific vehicle prohibitions.
     effective = next(
         (
             get(key)
-            for key in ("motorcar", "motor_vehicle", "vehicle", "access:delivery", "access")
+            for key in (
+                ("motorcar", "motor_vehicle", "vehicle", "access:delivery", "access")
+                if purpose == "delivery" else ("motorcar", "motor_vehicle", "vehicle", "access")
+            )
             if get(key)
         ),
         "",
@@ -206,10 +249,34 @@ def excluded_location_reason(row: Any) -> str:
     return ""
 
 
+def masks_for_purpose(masks, purpose: str):
+    """Legacy scope-free masks apply to both purposes; never infer their basis."""
+    if purpose not in {"delivery", "charging"}:
+        raise ValueError("Unknown motor-access purpose: " + purpose)
+    if masks is None or purpose == "delivery" or "exclusion_scope" not in masks:
+        return masks
+    return masks.loc[masks.exclusion_scope.fillna("all_motor").ne("delivery_only")]
+
+
+def barrier_has_no_area_scope(tags: Any, *, exclusion_category: str | None = None) -> bool:
+    """Access-only barriers constrain roads; callers check point geometry.
+
+    Native callers infer the category using the normal strong-facility-first
+    classifier. Mask preparation can reuse its already evaluated category.
+    """
+    category = excluded_location_reason(tags) if exclusion_category is None else exclusion_category
+    return category == "motor_access_prohibited" and _text(tags.get("barrier")).lower() not in {
+        "", "no", "false", "0"
+    }
+
+
 def prepare_exclusion_masks(raw: gpd.GeoDataFrame, area_crs: str) -> gpd.GeoDataFrame:
-    """Return geometry/category only; strip names, IDs and facility details."""
+    """Return geometry and exclusion purpose; strip source identities/details."""
     if raw.empty:
-        return gpd.GeoDataFrame({"exclusion_category": []}, geometry=[], crs="EPSG:4326")
+        return gpd.GeoDataFrame(
+            {key: [] for key in ["exclusion_category", "exclusion_scope", "exclusion_basis"]},
+            geometry=[], crs="EPSG:4326",
+        )
     categories = (
         raw["exclusion_category"].fillna("").astype(str)
         if "exclusion_category" in raw
@@ -218,19 +285,48 @@ def prepare_exclusion_masks(raw: gpd.GeoDataFrame, area_crs: str) -> gpd.GeoData
     selected = raw.loc[categories.ne("")].copy()
     selected["exclusion_category"] = categories.loc[selected.index]
     selected = selected.loc[selected.geometry.notna() & ~selected.geometry.is_empty]
+    if selected.empty:
+        return gpd.GeoDataFrame(
+            {key: [] for key in ["exclusion_category", "exclusion_scope", "exclusion_basis"]},
+            geometry=[], crs="EPSG:4326",
+        )
+    scopes, bases = [], []
+    for _, row in selected.iterrows():
+        tags = location_tags(row)
+        delivery_only = (
+            row.exclusion_category == "motor_access_prohibited"
+            and explicit_delivery_prohibited(tags)
+            and not excluded_location_reason(row, purpose="charging")
+        )
+        scopes.append("delivery_only" if delivery_only else "all_motor")
+        bases.append(
+            "explicit_delivery_purpose_prohibition" if delivery_only
+            else "source_or_declared_" + str(row.exclusion_category)
+        )
+    selected["exclusion_scope"] = scopes
+    selected["exclusion_basis"] = bases
     metric = selected.to_crs(area_crs)
+    pointlike = metric.geometry.geom_type.isin(["Point", "MultiPoint"])
+    access_only_barrier = selected.apply(
+        lambda row: barrier_has_no_area_scope(
+            location_tags(row), exclusion_category=row.exclusion_category
+        ), axis=1
+    )
+    # A barrier node constrains roads, regardless of the prohibited purpose.
+    metric = metric.loc[~(pointlike & access_only_barrier)]
     pointlike = metric.geometry.geom_type.isin(["Point", "MultiPoint"])
     metric.loc[pointlike, "geometry"] = metric.loc[pointlike].geometry.buffer(
         PUBLIC_LOCATION_POLICY["sensitive_point_buffer_m"]
     )
     # Lines are not area masks (a prohibited road does not prohibit neighbours).
     metric = metric.loc[metric.geometry.geom_type.isin(["Polygon", "MultiPolygon"])]
-    return metric[["exclusion_category", "geometry"]].to_crs(4326).reset_index(drop=True)
+    return metric[["exclusion_category", "exclusion_scope", "exclusion_basis", "geometry"]].to_crs(4326).reset_index(drop=True)
 
 
 def filter_public_locations(
     frame: gpd.GeoDataFrame,
     masks: gpd.GeoDataFrame | None = None,
+    *, purpose: str = "delivery", facility_categories: bool = True,
 ) -> tuple[gpd.GeoDataFrame, dict[str, Any]]:
     if frame.empty:
         result = frame.copy()
@@ -242,7 +338,16 @@ def filter_public_locations(
             "retained_count": 0,
             "removed_reason_counts": {},
         }
-    reasons = frame.apply(excluded_location_reason, axis=1).to_numpy(dtype=object)
+    if facility_categories:
+        resolver = excluded_location_reason
+        policy = PUBLIC_LOCATION_POLICY
+    else:
+        from .current_access import access_only_masks, native_location_reason
+        resolver = native_location_reason
+        masks = access_only_masks(masks)
+        policy = {"version": "native_access_only_locations_v1", "facility_categories": False}
+    masks = masks_for_purpose(masks, purpose)
+    reasons = frame.apply(lambda row: resolver(row, purpose=purpose), axis=1).to_numpy(dtype=object)
     if masks is not None and not masks.empty:
         aligned = masks.to_crs(frame.crs).reset_index(drop=True)
         valid = np.flatnonzero(reasons == "")
@@ -256,7 +361,7 @@ def filter_public_locations(
     result = frame.iloc[np.flatnonzero(keep)].copy().reset_index(drop=True)
     result["public_location_eligible"] = True
     return result, {
-        "policy": PUBLIC_LOCATION_POLICY,
+        "policy": policy,
         "spatial_mask_applied": masks is not None,
         "input_count": len(frame),
         "removed_count": int((~keep).sum()),

@@ -1,117 +1,59 @@
 # EVRPTW Data Project
 
-用统一的全国数据源和规则，构造城市级配送环境（City Logistics Environment，CLE）。
+用同一套规则构造城市配送环境（CLE）：**路网 → 参考速度 → 带住宅户数的建筑地点 → depot → charging station**。
 
-[English](README.md) · [输入格式](docs/INPUTS.md) · [建模方法](docs/METHODS.md) · [输出与读取](docs/CLE_SCHEMA.md)
+[English](README.md) · [完整 Stage 1 方法](docs/STAGE1_SPEC.zh-CN.md) · [本机与服务器运行](docs/stage1/SERVER_IMPLEMENTATION.zh-CN.md) · [当前建筑统计](docs/stage1/STATISTICS.zh-CN.md)
 
-Stage 1 生成城市路网、潜在 customer location、depot location、charging location，以及同一路网上的参考速度和接入成本。Customer 是地点，house 单个、可识别的 apartment 小区整体一个；residential units 仅为辅助信息。
+Customer 以 Microsoft–OSM 对应的建筑为实体，NSI 提供住宅属性与户数证据；每栋选择一条合适的 NSI 代表记录，缺失户数由经过校准的 RMS 邻居模型补全。原始记录、最终户数、选择方法与未解决原因分别保存。本机和服务器执行同一条确定性流程。
 
-**本仓库提供实现和配置，不附带城市原始数据或已生成的 CLE。** 完整数据包与 Stage 2 instance activation 留到后续阶段。已经有本地来源包时，按下面的流程运行。
+冻结版本的 11 城全量生成按[服务器 Agent 任务书](docs/stage1/SERVER_AGENT_HANDOFF.zh-CN.md)执行：全体城市统一校准一次，再逐城构造完整 CLE。文档区分本机已完成的建筑属性结果和服务器待完成的道路接入/组装验收。
 
 ## 安装
 
-需要 Python 3.11+。建议在 Linux 或 macOS 上使用独立环境；Windows 可使用 WSL。大城市按城市串行构造，建议 32 GB 内存并预留足够磁盘空间。
+需要 Python 3.11+，支持 Linux/macOS。
 
 ```bash
-git clone https://github.com/WaitDumplings/EVRPTW-Data-Project.git
-cd EVRPTW-Data-Project
 python -m venv .venv
 source .venv/bin/activate
 python -m pip install -e .
 ```
 
-需要从本地 OSM PBF 提取道路时，安装 `python -m pip install -e '.[osm]'`。
+从本地 OSM PBF 提取数据时安装 `python -m pip install -e '.[osm]'`。
 
 ## 从一座城市开始
 
 ```bash
-evrptw-data init my-city
+evrptw-cle stage1 init my-city
+# 编辑 my-city/stage1.json，填写本地源文件路径。
+evrptw-cle stage1 plan my-city/stage1.json
+evrptw-cle stage1 run my-city/stage1.json --cities dallas
 ```
 
-将本地来源包放入 `my-city/inputs/`。默认项目选择 Dallas，可以编辑 `my-city/project.json`：
+`evrptw-data stage1` 和 `evrptw-stage1` 提供相同命令。相对路径以配置文件目录为基准。仓库提供实现和配置，城市源文件按[输入说明](docs/INPUTS.md)准备。
 
-```json
-{
-  "schema": "evrptw_stage1_project_v1",
-  "sources": {
-    "inventory": "inputs/inventory.json",
-    "root": "inputs",
-    "roads": "inputs/roads",
-    "customers": null,
-    "osm_cohort": null
-  },
-  "output": "outputs/cle",
-  "cities": ["dallas"]
-}
-```
-
-所有相对路径以 project.json 所在目录为准，与启动命令的位置无关。sources.customers 为空时自动从原始 Microsoft / NSI 输入准备住宅来源；已有匹配结果时可指定 customer registry。道路已提取时直接使用 sources.roads；需要从 PBF 提取时指定 sources.osm_cohort。具体文件格式见[输入说明](docs/INPUTS.md)。
+`run` 依次完成建筑准备、服务域归属、户数模型校准、户数估计、属性定稿及五部分 CLE 构造。先检查建筑属性时可执行：
 
 ```bash
-# 先查看缺少哪些输入，不开始大规模计算。
-evrptw-data plan my-city/project.json
-
-# 构造并进行一次最终数据验证。
-evrptw-data build my-city/project.json
-
-# 查看三类地点数量和保存的证书状态。
-evrptw-data inspect my-city/outputs/cle
+evrptw-cle stage1 run my-city/stage1.json --cities dallas --customer-only
 ```
 
-缺少来源包时，plan 会明确列出缺少的输入；它不会自动下载 latest 数据替代固定版本。
+各阶段也可以独立运行：`prepare`、`scope`、`calibrate-units`、`estimate-units`、`finalize`、`components` 和 `verify`。完整参数与文件说明见[运行文档](docs/stage1/SERVER_IMPLEMENTATION.zh-CN.md)。
 
-## 多城、续跑与日志
+## 数据与输出
 
-在配置里填写多个城市，或临时覆盖选择：
+路网取行政边界外扩 20 km，保留道路方向、车型访问和实际障碍；普通 private 道路按配送穿行假设纳入路由。州级 NEI/StreetLight 统计为每条道路限速配置参考运行系数。Customer 使用 canonical 建筑；明确物流园区整体归并为 depot；AFDC 提供充电地点和设备。三类地点接入同一套路网。
 
-```bash
-evrptw-data build my-city/project.json --cities dallas fort-worth
-```
+当前 11 城离线属性运行中，**4,012,462 个候选建筑有 3,922,741 个得到可用住宅户数，覆盖率 97.7639%**。其中 3,194,252 个来自 NSI 代表记录，728,489 个来自邻居估计。此比例是道路接入前的建筑属性覆盖率；逐城数量、未补全原因与最大户数见[统计文档](docs/stage1/STATISTICS.zh-CN.md)。
 
-支持的参考城市为 New York、Los Angeles、Chicago、Houston、Phoenix、Philadelphia、San Antonio、San Diego、Dallas、Jacksonville 和 Fort Worth。城市输入必须在来源包中存在；当前速度配置覆盖 AZ、CA、FL、IL、NY、PA、TX。
-
-同一命令再次执行时，仅复用输入、代码和输出一致的已完成组件。输入或实现改变后请指定新的 output，避免混用版本。详细日志在 output/logs/，城市组件日志在 output/cities/&lt;city&gt;/。
-
-正常构造流程为：
-
-```text
-来源准备（如需要） → 路网 → customer / depot / charging / speed → CLE 组装 → 数据验证
-```
-
-正常构造不会运行 pytest、论文基线对比或历史个案审计。独立数据验证也可以稍后单独执行：
-
-```bash
-evrptw-data build my-city/project.json --no-verify
-evrptw-data verify my-city/outputs/cle
-```
-
-读取器要求数据具有匹配 manifest 的独立证书；跳过验证的中间输出需要先执行 verify。
-
-## 在 Python 中读取
+每城组装结果包括五个组件目录、`locations.parquet`、`location_access_costs.parquet` 及来源和构造 manifest。每个 customer 保存 `units_source`、`units_method`、原始 NSI 记录关联与最终户数。详细字段见 [CLE Schema](docs/CLE_SCHEMA.md)。
 
 ```python
 from evrptw_cle.cle_reader import CityLogisticsEnvironment
 
-cle = CityLogisticsEnvironment("my-city/outputs/cle/cities/dallas")
+cle = CityLogisticsEnvironment("my-city/outputs/stage1-building-first/cities/dallas")
 locations = cle.locations()
-eligible = locations.loc[locations.candidate_eligible]
-public_roads = cle.graph("public")
-delivery_terminal = cle.graph("delivery_terminal")
-charging_terminal = cle.graph("charging_terminal")
-access_costs = cle.access_costs()
 ```
 
-三种图分别读取。Private terminal 不能直接合并成公共穿行捷径。潜在地点的保留数、默认可用数和待核数分开保存，不能把它们当作订单数或已激活客户数。
+## Stage 2 配送实例
 
-## 项目结构
-
-```text
-src/evrptw_cle/   构造、接入、参数、组装与读取实现
-configs/          全国统一规则与七州速度统计
-scripts/          命令内部使用的分阶段 worker
-examples/         项目配置与读取示例
-docs/             输入格式、建模方法、CLE 数据结构
-tests/            回归测试，供开发时运行
-```
-
-开发检查：`python -m pip install -e '.[dev,osm]'`，然后运行 `pytest` 和 `ruff check src scripts tests`。源数据和第三方来源的使用说明见 [NOTICE.md](NOTICE.md)。
+Stage 2 在核验通过的 CLE 上抽取 depot 和固定数量的 customer，生成订单、选取充电站并保存有向道路成本。先用[审阅配置](examples/stage2/server_review.json)跑 Dallas Cus100，命令和验收见 [Stage 2 运行说明](docs/stage2/REVIEW_PACKAGE.zh-CN.md)。两阶段的服务器顺序和交付物见[联合交接](docs/SERVER_HANDOFF.zh-CN.md)。历史数据与入口见[历史说明](docs/HISTORICAL_CLE.md)。

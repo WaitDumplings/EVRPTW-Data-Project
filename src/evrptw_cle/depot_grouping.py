@@ -31,8 +31,25 @@ def normalized(value):
     return re.sub(r"[^a-z0-9]", "", str(value).strip().lower())
 
 
+def explicit_logistics_park(tags):
+    """An explicit logistics/depot site, not a generic industrial district."""
+    tokens = {str(k): str(v).strip().lower() for k, v in tags.items()}
+    if tokens.get("landuse") in {"logistics", "warehouse", "depot"}:
+        return True
+    if tokens.get("site") in {"logistics", "logistics_park", "distribution", "warehouse", "depot"}:
+        return True
+    if tokens.get("industrial") in {"logistics", "logistics_park", "distribution", "distribution_centre", "distribution_center"}:
+        return True
+    if tokens.get("logistics") in {"yes", "logistics", "distribution", "warehouse", "freight"}:
+        return True
+    name = " ".join(tokens.get(k, "") for k in ["name", "official_name"])
+    return tokens.get("landuse") == "industrial" and bool(re.search(
+        r"\b(?:logistics|distribution|fulfillment|fulfilment)\s+(?:park|campus|centre|center)\b", name))
+
+
 def refine_depot_groups(
-    frame, area_crs, address_distance_m=100.0, context=None, campus_span_m=1000.0
+    frame, area_crs, address_distance_m=100.0, context=None, campus_span_m=1000.0,
+    explicit_logistics_parks=False,
 ):
     """Preserve current campus groups; add geometry/coordinate/address aliases.
 
@@ -135,9 +152,12 @@ def refine_depot_groups(
     # prevents a long industrial corridor becoming one departure location.
     if context is not None:
         context_metric = context.to_crs(area_crs)
-        accepted = context_metric.get("landuse", pd.Series("", index=context_metric.index)).isin(
-            {"industrial", "logistics", "warehouse", "depot"}
-        )
+        if explicit_logistics_parks:
+            from .public_locations import source_osm_tags
+            accepted = context_metric.apply(lambda row: explicit_logistics_park(source_osm_tags(row)), axis=1)
+        else:
+            accepted = context_metric.get("landuse", pd.Series("", index=context_metric.index)).isin(
+                {"industrial", "logistics", "warehouse", "depot"})
         accepted &= context_metric.geometry.geom_type.isin({"Polygon", "MultiPolygon"})
         context_metric = context_metric.loc[accepted].copy()
         context_metric["_area"] = context_metric.geometry.area
@@ -148,12 +168,13 @@ def refine_depot_groups(
             if len(roots) < 2:
                 continue
             merged = sorted(set().union(*(members[r] for r in roots)))
-            if float(pdist(xy[merged]).max()) > campus_span_m:
+            if not explicit_logistics_parks and float(pdist(xy[merged]).max()) > campus_span_m:
                 continue
             first = merged[0]
             for index in merged[1:]:
                 before = len(events)
-                union(first, index, "shared_osm_industrial_or_logistics_context_bounded_span")
+                union(first, index, "shared_explicit_osm_logistics_park" if explicit_logistics_parks
+                      else "shared_osm_industrial_or_logistics_context_bounded_span")
                 if len(events) > before:
                     events[-1]["context_source_osm_id"] = str(row.source_osm_id)
     group_ids = {}

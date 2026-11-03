@@ -14,6 +14,7 @@ from scipy.sparse import coo_matrix
 from scipy.sparse.csgraph import connected_components
 
 from .runtime_paths import CONFIG_ROOT
+from .public_locations import masks_for_purpose
 from .util import sha256_file, write_json
 
 
@@ -259,6 +260,11 @@ def verify_city_cle(city_dir, *, report_path=None):
         check("exclusion_evidence_same_frozen_PBF",evidence["pbf_sha256"]==road["source"]["pbf_sha256"] and evidence["mask_sha256"]==road["mask_sha256"])
 
     physical = gpd.read_parquet(base / "roads/physical_roads.parquet")
+    if road.get("policy") == "delivery_terminal_access_v3_purpose_scoped_masks":
+        check("explicit_mask_purpose_contract", road.get("mask_scope_contract") == "explicit_purpose_v1_legacy_missing_is_all_motor")
+        check("physical_mask_fields_declared", road.get("physical_mask_fields") == ["sensitive_interior_road", "delivery_only_interior_road"])
+        check("physical_mask_fields_present", {"sensitive_interior_road", "delivery_only_interior_road"} <= set(physical.columns))
+        check("delivery_masks_block_delivery_hosting", ~physical.loc[physical.delivery_only_interior_road, "motor_access_allowed"].any())
     check("physical_inventory_uses_declared_metric_CRS",physical.crs==CRS.from_user_input(road["area_crs"]))
     check("unique_native_physical_segments", ~physical.physical_edge_id.duplicated().any())
     raw = gpd.read_parquet(base / "private_sources/osm_ways.parquet", columns=["osmid", "tags_json", "node_ids_json", "geometry"])
@@ -450,13 +456,23 @@ def verify_city_cle(city_dir, *, report_path=None):
     check("depot_unique_group_eligibility", actual_depots.sort_index().equals(expected_depots.sort_index()))
     masks_path = Path(components["customer"]["inputs"]["public_masks"]["path"])
     masks = gpd.read_parquet(masks_path).to_crs(4326)
-    if len(masks):
-        pairs = shapely.STRtree(masks.geometry.to_numpy()).query(canonical.geometry.to_numpy(), predicate="intersects")
-        check("all_retained_sources_exclude_sensitive_masks", pairs.size == 0)
+    source_masks_clear = True
+    for kind in all_native:
+        purpose_masks = masks_for_purpose(masks, "charging" if kind == "charging" else "delivery")
+        if len(purpose_masks):
+            pairs = shapely.STRtree(purpose_masks.geometry.to_numpy()).query(
+                canonical.loc[canonical.location_type.eq(kind)].geometry.to_numpy(),
+                predicate="intersects",
+            )
+            source_masks_clear = source_masks_clear and pairs.size == 0
+    check("all_retained_sources_exclude_sensitive_masks", source_masks_clear)
     shape = physical.set_index("physical_edge_id").geometry
     host_permission=physical.set_index("physical_edge_id")
     metric_masks = masks.to_crs(physical.crs)
-    mask_tree = shapely.STRtree(metric_masks.geometry.to_numpy()) if len(masks) else None
+    mask_trees = {}
+    for purpose in ["delivery", "charging"]:
+        purpose_masks = masks_for_purpose(metric_masks, purpose)
+        mask_trees[purpose] = shapely.STRtree(purpose_masks.geometry.to_numpy()) if len(purpose_masks) else None
     admin_shape = gpd.read_file(base / manifest["boundaries"]["admin_boundary"]).to_crs(physical.crs).geometry.union_all()
     service_shape = gpd.read_file(base / manifest["boundaries"]["service_boundary"]).to_crs(physical.crs).geometry.union_all()
     water = admin_shape.difference(service_shape)
@@ -468,6 +484,7 @@ def verify_city_cle(city_dir, *, report_path=None):
     length_transformer=Transformer.from_crs(4326,physical.crs,always_xy=True)
     geometry_cache=set()
     for kind, (table, key, gate) in all_native.items():
+        mask_tree = mask_trees["charging" if kind == "charging" else "delivery"]
         eligible = table.loc[table[gate]]
         check(kind + "_eligible_has_directed_access", eligible.local_access_confirmed.all() and eligible.protected_roundtrip_eligible.all() and eligible.access_review_reason.eq("").all())
         check(kind + "_no_manual_id_holds", "access_case_review_hold" not in table)

@@ -19,6 +19,7 @@ from evrptw_cle.depot_grouping import DEPOT_GROUPING_POLICY, refine_depot_groups
 from evrptw_cle.public_locations import (
     excluded_location_reason,
     filter_public_locations,
+    source_osm_tags,
 )
 
 ALLOWED_LOGISTICS_VALUES = {
@@ -80,6 +81,39 @@ def _text(value: Any) -> str:
     return str(value).strip()
 
 
+_SOURCE_METADATA_FIELDS = {
+    "source_osm_id",
+    "source_osm_url",
+    "old_filter_hit",
+    "osm_edit_timestamp",
+    "osm_object_version",
+    "geometry_priority",
+    "osm_tags_json",
+    "tags",
+}
+
+
+def _capture_native_source_tags(raw: gpd.GeoDataFrame) -> gpd.GeoDataFrame:
+    """Capture flat raw OSM properties before any model-derived columns exist."""
+    result = raw.copy()
+    metadata = _SOURCE_METADATA_FIELDS | {raw.geometry.name}
+
+    def capture(row):
+        supplied = any(isinstance(row.get(key), (str, dict)) for key in ("osm_tags_json", "tags"))
+        if supplied:
+            native = source_osm_tags(row)
+        else:
+            native = {
+                key: value
+                for key in raw.columns
+                if key not in metadata and (value := _text(row.get(key)))
+            }
+        return json.dumps(native, ensure_ascii=False, sort_keys=True)
+
+    result["osm_tags_json"] = result.apply(capture, axis=1)
+    return result
+
+
 def _carrier(row: pd.Series) -> str:
     haystack = " ".join(
         _text(row.get(column))
@@ -108,6 +142,12 @@ def _candidate_tags(row: pd.Series) -> dict[str, str]:
         "logistics",
         "access",
         "access:delivery",
+        "motorcar",
+        "motor_vehicle",
+        "vehicle",
+        "motor_vehicle:conditional",
+        "barrier",
+        "locked",
         "addr:housenumber",
         "addr:street",
         "addr:city",
@@ -116,7 +156,9 @@ def _candidate_tags(row: pd.Series) -> dict[str, str]:
         "source",
         "source:url",
     ]
-    return {column: value for column in columns if (value := _text(row.get(column)))}
+    tags = source_osm_tags(row)
+    tags.update({column: value for column in columns if (value := _text(row.get(column)))})
+    return tags
 
 
 def _is_matched_object(row: pd.Series) -> bool:
@@ -144,8 +186,9 @@ def _evidence_tier(
     row: pd.Series,
     facility_area_m2: float,
     min_warehouse_area_m2: float,
+    facility_categories: bool = True,
 ) -> tuple[str, str, int]:
-    if excluded_location_reason(row):
+    if facility_categories and excluded_location_reason(row):
         return "C_industrial_proxy", "excluded by public-location policy", 0
     carrier = _carrier(row)
     name = _text(row.get("name")) or _text(row.get("official_name"))
@@ -274,6 +317,7 @@ def _classify_candidates(
     raw: gpd.GeoDataFrame,
     boundary: gpd.GeoDataFrame,
     min_warehouse_area_m2: float,
+    facility_categories: bool = True,
 ) -> tuple[gpd.GeoDataFrame, dict[str, int]]:
     local_crs = boundary.estimate_utm_crs()
     projected = raw.to_crs(local_crs)
@@ -283,6 +327,7 @@ def _classify_candidates(
             row,
             float(row["facility_area_m2"]),
             min_warehouse_area_m2,
+            facility_categories=facility_categories,
         ),
         axis=1,
     )
@@ -444,15 +489,23 @@ def _assign_facility_groups(
     candidates: gpd.GeoDataFrame,
     boundary: gpd.GeoDataFrame,
     context: gpd.GeoDataFrame | None = None,
+    explicit_logistics_parks: bool = False,
 ) -> gpd.GeoDataFrame:
-    legacy = _assign_legacy_facility_groups(candidates, boundary)
+    if explicit_logistics_parks:
+        legacy = candidates.reset_index(drop=True).copy()
+        legacy["facility_group_id"] = "source_" + legacy.source_osm_id.astype(str)
+        legacy["facility_group_merge_rules_json"] = "[]"
+    else:
+        legacy = _assign_legacy_facility_groups(candidates, boundary)
     result, events = refine_depot_groups(
         legacy,
         str(boundary.estimate_utm_crs()),
         context=context,
+        explicit_logistics_parks=explicit_logistics_parks,
     )
     result.attrs["grouping_audit"] = {
-        "policy": DEPOT_GROUPING_POLICY,
+        "policy": dict(DEPOT_GROUPING_POLICY, version="spatial_depot_v3_explicit_logistics_park",
+                       generic_industrial_context_merge=False) if explicit_logistics_parks else DEPOT_GROUPING_POLICY,
         "source_object_count": len(result),
         "group_count": int(result.facility_group_id.nunique()),
         "merge_operations": len(events),
@@ -460,14 +513,18 @@ def _assign_facility_groups(
     return result
 
 
-def build_public_depot_candidates(raw, boundary, city_slug, masks, reference_area_m2=1000.0):
+def build_public_depot_candidates(raw, boundary, city_slug, masks, reference_area_m2=1000.0,
+                                  *, explicit_logistics_parks=False, facility_categories=True):
     """One production path for source filtering, classification and grouping."""
-    context, public_filter = filter_public_locations(raw, masks)
-    candidates, tier_counts = _classify_candidates(context.copy(), boundary, reference_area_m2)
+    context, public_filter = filter_public_locations(_capture_native_source_tags(raw), masks,
+                                                    facility_categories=facility_categories)
+    candidates, tier_counts = _classify_candidates(context.copy(), boundary, reference_area_m2,
+                                                  facility_categories=facility_categories)
     if candidates.empty:
         raise ValueError(f"No public depot source candidates remain for {city_slug}")
     candidates = candidates.sort_values("source_osm_id").reset_index(drop=True)
-    candidates = _assign_facility_groups(candidates, boundary, context=context)
+    candidates = _assign_facility_groups(candidates, boundary, context=context,
+                                         explicit_logistics_parks=explicit_logistics_parks)
     candidates["city_slug"] = city_slug
     candidates["candidate_id"] = city_slug + "-depot-" + candidates["source_osm_id"].astype(str)
     tier_a = candidates.evidence_tier.eq("A_osm_explicit")

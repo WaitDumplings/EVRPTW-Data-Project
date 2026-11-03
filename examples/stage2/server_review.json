@@ -1,0 +1,45 @@
+{
+  "schema": "evrptw_territory_first_config_v1",
+  "input": {
+    "cle": "/data/evrptw/stage1-20261102-r1-output/cities/dallas",
+    "communities": "/data/evrptw/tiger2025/dallas-bg.parquet",
+    "donor_artifact": "/data/evrptw/amazon/joint-marks"
+  },
+  "world": {
+    "seed": 42,
+    "depot_sampling": "bg_uniform",
+    "service_policy": "fastest_time_energy",
+    "service_limit_s": 5445,
+    "p_unit": 0.03,
+    "mean_parcels_per_active_unit": 1.4
+  },
+  "activation": {
+    "method": "sequential_tract",
+    "candidate_multiplier": 20,
+    "opening_probability": 0.1
+  },
+  "operations": {
+    "start_date": "2026-11-02",
+    "days": 1
+  },
+  "instances": {
+    "sizes": [100],
+    "materialize_day_indices": [0]
+  },
+  "physical": {
+    "charging": {
+      "supply_policy": "tract_joint_budget",
+      "reference_departure_soc": 0.8,
+      "external_cs_budget": 20,
+      "external_cs_budgets_by_size": {
+        "100": 20,
+        "500": 30,
+        "1000": 40,
+        "2000": 60
+      }
+    }
+  },
+  "output": {
+    "path": "/data/evrptw/runs/dallas-cus100-review"
+  }
+}

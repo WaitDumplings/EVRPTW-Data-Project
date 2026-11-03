@@ -6,6 +6,7 @@ import argparse
 import gc
 import json
 from pathlib import Path
+import sys
 
 from .context_validation import validate_context_bindings
 from .runtime_paths import CONFIG_ROOT
@@ -177,8 +178,14 @@ def depots(args):
 
 
 def main(argv=None):
+    argv = list(sys.argv[1:] if argv is None else argv)
+    if argv and argv[0] == "stage1":
+        from .stage1 import main as building_stage1_main
+
+        return building_stage1_main(argv[1:])
     p = argparse.ArgumentParser(description=__doc__)
     sub = p.add_subparsers(dest="command")
+    sub.add_parser("stage1", help="Build Stage1 with calibrated NSI and neighbor unit attributes")
     init = sub.add_parser("init", help="Create a project.json and local input folder")
     init.add_argument("directory", type=Path)
     for name, help_text in [("plan", "List required inputs and selected cities without building"),
@@ -192,6 +199,12 @@ def main(argv=None):
             command.add_argument("--no-verify", action="store_true", help="Defer final data validation to the verify command")
     check = sub.add_parser("verify", help="Independently validate a built CLE cohort")
     check.add_argument("output", type=Path)
+    check.add_argument("--historical", action="store_true", help="Use the frozen receipt's original verifier and policies")
+    check.add_argument("--report-dir", type=Path, help="Fresh report directory outside the frozen cohort")
+    check.add_argument("--cities", nargs="+", help="Historical cities to re-audit, serially; default is the full frozen cohort")
+    history = sub.add_parser("history", help="Inspect receipt-bound implementation and historical re-audit inputs")
+    history.add_argument("output", type=Path)
+    history.add_argument("--json", action="store_true")
     inspect = sub.add_parser("inspect", help="Show location counts and saved certificate status")
     inspect.add_argument("output", type=Path)
     inspect.add_argument("--json", action="store_true")
@@ -218,7 +231,7 @@ def main(argv=None):
     args = p.parse_args(argv)
     if args.command is None:
         p.print_help()
-    elif args.command in ["init", "plan", "build", "verify", "inspect"]:
+    elif args.command in ["init", "plan", "build", "verify", "inspect", "history"]:
         from .workflow import build_project, initialize, inspect_output, plan_project, verify_output
 
         try:
@@ -243,8 +256,23 @@ def main(argv=None):
                 output = build_project(args.config, args.cities, verify=not args.no_verify)
                 print(f"Build complete: {output}\nView counts: evrptw-data inspect {output}")
             elif args.command == "verify":
-                result = verify_output(args.output)
+                result = verify_output(args.output, historical=args.historical,
+                                       report_dir=args.report_dir, cities=args.cities)
                 print(f"Data validation passed: {result['city_count']} cities")
+                if args.historical:
+                    print("Historical reports: " + result["report_dir"])
+            elif args.command == "history":
+                from .historical import inspect_history
+
+                report = inspect_history(args.output)
+                if args.json:
+                    print(json.dumps(report, indent=2))
+                else:
+                    print("Frozen CLE: " + report["output"])
+                    print("Original freeze: " + report["freeze_sha256"])
+                    print(f"Bound snapshot: {report['snapshot_files_verified']} files, {report['city_count']} cities")
+                    print("Full re-audit uses the saved implementation and original source paths:")
+                    print(f"  evrptw-data verify {report['output']} --historical --report-dir NEW_DIRECTORY")
             else:
                 report = inspect_output(args.output)
                 if args.json:

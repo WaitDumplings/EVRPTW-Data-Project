@@ -1,14 +1,18 @@
-# Local validation environment; not a cross-platform dependency lock.
-geopandas==1.2.0
-shapely==2.2.0
-osmnx==2.1.1
-networkx==3.7
-numpy==2.5.4
+# Observed Stage 1 tests/rebuild environment, 2026-11-02: Python 3.11.11, macOS.
+# Not a cross-platform lock. GEOS 3.13.1 and PROJ 9.5.1 are recorded separately.
+geopandas==1.1.3
+shapely==2.1.2
+osmnx==2.1.0
+networkx==3.6.1
+numpy==2.3.5
 pandas==2.3.3
-pyarrow==21.0.0
-pyogrio==0.13.0
-pyproj==3.8.0
-scipy==1.18.1
+pyarrow==23.0.1
+pyogrio==0.12.1
+pyproj==3.7.2
+scipy==1.17.0
 requests==2.34.2
-matplotlib==3.11.2
-pytest==8.4.2
+matplotlib==3.10.8
+pytest==9.1.1
+ruff==0.16.1
+# Optional PBF extraction dependency is installed with .[osm]; current CLE
+# construction consumes the frozen complete-way extracts and does not need it.

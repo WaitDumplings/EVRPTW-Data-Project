@@ -6,6 +6,12 @@ from pyproj import CRS
 
 from .util import sha256_file
 
+DELIVERY_CONTEXT_POLICIES = {
+    "delivery_terminal_access_v2",
+    "delivery_terminal_access_v3_purpose_scoped_masks",
+    "delivery_route_access_v4_private_through_no_facility_categories",
+}
+
 
 def validate_generation_dependencies(manifest):
     """A topology version alone cannot authorize reuse after code changes."""
@@ -13,8 +19,10 @@ def validate_generation_dependencies(manifest):
     if not isinstance(dependencies, dict) or not dependencies:
         raise ValueError("Road context lacks generation dependency hashes; rebuild it")
     required = {"local_road_access.py", "terminal_access.py", "road_tags.py"}
-    if manifest.get("policy") == "delivery_terminal_access_v2":
+    if manifest.get("policy") in DELIVERY_CONTEXT_POLICIES:
         required |= {"delivery_access.py", "public_locations.py", "frontage.py"}
+    if manifest.get("policy") == "local_first_real_osm_access_v2_purpose_scoped_masks":
+        required.add("public_locations.py")
     if not required <= dependencies.keys():
         raise ValueError("Road context omits required generation dependencies; rebuild it")
     for name, digest in dependencies.items():
@@ -34,7 +42,7 @@ def validate_context_bindings(
     input for this context. Boundary here means the land/service boundary,
     rather than the larger administrative routing envelope.
     """
-    if manifest.get("policy") != "delivery_terminal_access_v2":
+    if manifest.get("policy") not in DELIVERY_CONTEXT_POLICIES:
         raise ValueError("The reviewed delivery-purpose access context is required")
     if manifest.get("topology_contract") != "source_direction_and_access_node_segmentation_v2":
         raise ValueError("Road context predates reviewed direction/barrier topology; rebuild it")
@@ -45,6 +53,8 @@ def validate_context_bindings(
         (boundary_path, "service_boundary_sha256", "service boundary"),
         (mask_path, "mask_sha256", "exclusion masks"),
     ]:
+        if field == "mask_sha256" and not manifest.get("facility_category_masks", True):
+            continue
         if path is not None and sha256_file(Path(path)) != manifest.get(field):
             raise ValueError(f"Location {label} differ from road context")
     if area_crs is not None and (
