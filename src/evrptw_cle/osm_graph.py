@@ -11,6 +11,8 @@ import networkx as nx
 import osmnx as ox
 from shapely.ops import unary_union
 
+from .public_locations import explicit_delivery_prohibited
+
 _EXCLUDED_HIGHWAYS = re.compile(
     r"^(abandoned|bridleway|bus_guideway|construction|corridor|cycleway|elevator|"
     r"escalator|footway|no|path|pedestrian|planned|platform|proposed|raceway|razed|"
@@ -131,6 +133,8 @@ def _tag_values(value: Any) -> list[str]:
 
 def _edge_is_drivable(data: dict[str, Any]) -> bool:
     """Public through roads, respecting the most specific motor-access tag."""
+    if explicit_delivery_prohibited(data):
+        return False
     highways = _tag_values(data.get("highway"))
     if not highways or all(_EXCLUDED_HIGHWAYS.fullmatch(value) for value in highways):
         return False

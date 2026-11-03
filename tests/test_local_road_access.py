@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 from shapely.geometry import LineString, Polygon, box
 
-from evrptw_cle.local_road_access import LocalAccessContext, _forest, classify_way
+from evrptw_cle.local_road_access import POLICY, LocalAccessContext, _forest, classify_way
 from evrptw_cle.osm_graph import _edge_is_drivable
 from evrptw_cle.util import sha256_file
 
@@ -27,6 +27,7 @@ def test_saved_context_preserves_string_node_keys_and_forests(tmp_path):
         json.dumps(
             {
                 "area_crs": ctx.area_crs,
+                "policy": POLICY,
                 "outputs": {name: sha256_file(tmp_path / name) for name in names},
             }
         )

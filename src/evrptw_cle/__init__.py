@@ -1,3 +1,3 @@
-"""Reviewed EVRPTW geographic components; CLE assembly is not yet frozen."""
+"""Stage1 construction implementation; generated CLEs have separate receipts."""
 
-__version__ = "0.1.0.dev0"
+__version__ = "0.3.0"

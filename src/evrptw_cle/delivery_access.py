@@ -27,11 +27,15 @@ from .local_road_access import (
     LocalAccessContext,
     _forest,
 )
-from .public_locations import excluded_location_reason
+from .public_locations import (
+    excluded_location_reason,
+    explicit_delivery_prohibited,
+    masks_for_purpose,
+)
 from .terminal_access import _effective_motor_access
 from .util import sha256_file, write_json
 
-POLICY = "delivery_terminal_access_v2"
+POLICY = "delivery_terminal_access_v3_purpose_scoped_masks"
 
 PHYSICAL_BLOCKS = {
     "block",
@@ -68,8 +72,14 @@ def _generic_charging_permission(tags):
     )
 
 
-def permission_inventory(physical, source_dir, masks):
+def permission_inventory(physical, source_dir, masks, *, allow_private_through=False,
+                         facility_masks=True):
     """Apply the accepted authorized-delivery policy to real source segments."""
+    if allow_private_through or not facility_masks:
+        from .current_access import current_permission_inventory
+        return current_permission_inventory(physical, source_dir,
+                                            allow_private_through=allow_private_through,
+                                            masks=masks)
     roads = physical.copy()
     nodes = pd.read_parquet(
         Path(source_dir) / "osm_access_nodes.parquet", columns=["osmid", "tags_json"]
@@ -81,7 +91,7 @@ def permission_inventory(physical, source_dir, masks):
         charging_nodes[str(row.osmid)] = _generic_charging_permission(tags)
         _, legal = _effective_motor_access(tags)
         hard = (
-            tags.get("access:delivery") in {"no", "prohibited", "none"}
+            explicit_delivery_prohibited(tags)
             or tags.get("locked") == "yes"
             or tags.get("barrier") in PHYSICAL_BLOCKS
         )
@@ -103,7 +113,7 @@ def permission_inventory(physical, source_dir, masks):
         charging_ways[str(row.osmid)] = _generic_charging_permission(tags)
         _, legal = _effective_motor_access(tags)
         if (
-            tags.get("access:delivery") in {"no", "prohibited", "none"}
+            explicit_delivery_prohibited(tags)
             or tags.get("service") == "emergency_access"
             or tags.get("locked") == "yes"
             or tags.get("barrier") in PHYSICAL_BLOCKS
@@ -115,17 +125,27 @@ def permission_inventory(physical, source_dir, masks):
             hard_ways.add(str(row.osmid))
     private_way = roads.legal_access_tier.eq("permit_required") & roads.anchor_class_eligible
     sensitive = np.zeros(len(roads), dtype=bool)
+    delivery_sensitive = np.zeros(len(roads), dtype=bool)
     ids = np.flatnonzero(private_way)
-    if len(ids) and len(masks):
-        pairs = shapely.STRtree(masks.to_crs(roads.crs).geometry.to_numpy()).query(
-            roads.geometry.to_numpy()[ids], predicate="intersects"
-        )
-        if pairs.size:
-            sensitive[ids[np.unique(pairs[0])]] = True
+    generic_masks = masks_for_purpose(masks, "charging")
+    delivery_masks = masks.loc[
+        masks.get("exclusion_scope", pd.Series("all_motor", index=masks.index)).eq("delivery_only")
+    ]
+    for selected_masks, hits in [(generic_masks, sensitive), (delivery_masks, delivery_sensitive)]:
+        if len(ids) and len(selected_masks):
+            pairs = shapely.STRtree(selected_masks.to_crs(roads.crs).geometry.to_numpy()).query(
+                roads.geometry.to_numpy()[ids], predicate="intersects"
+            )
+            if pairs.size:
+                hits[ids[np.unique(pairs[0])]] = True
+    delivery_interior = roads.get(
+        "delivery_only_interior_road", pd.Series(False, index=roads.index)
+    ).to_numpy() | delivery_sensitive
     unsupported = (
         roads.osmid.isin(hard_ways).to_numpy()
         | roads.sensitive_interior_road.to_numpy()
         | sensitive
+        | delivery_interior
     )
     private_endpoint = (
         roads.edge_u.isin(private_nodes) | roads.edge_v.isin(private_nodes)
@@ -153,6 +173,7 @@ def permission_inventory(physical, source_dir, masks):
     roads["delivery_authorization_assumed"] = private_way.to_numpy() | private_endpoint
     roads["node_access_blocked"] = ~flexible_node
     roads["sensitive_interior_road"] = roads.sensitive_interior_road | sensitive
+    roads["delivery_only_interior_road"] = delivery_interior
     # Purpose restrictions permit delivery access but never public transit.
     restricted_purpose = roads.legal_access_tier.isin(["destination_or_customers", "delivery_only"])
     terminal = (
@@ -228,6 +249,9 @@ def build_delivery_access_context(
     mask_path,
     output_dir,
     area_crs,
+    selection_buffer_km=None,
+    allow_private_through=False,
+    facility_masks=True,
 ):
     seed_dir, source_dir, output_dir = Path(seed_dir), Path(source_dir), Path(output_dir)
     old = json.loads((seed_dir / "access_context_manifest.json").read_text())
@@ -248,11 +272,13 @@ def build_delivery_access_context(
     for name, digest in extraction["outputs"].items():
         if sha256_file(source_dir / name) != digest:
             raise ValueError("Changed road extraction: " + name)
-    for key, path in [
+    bindings = [
         ("admin_boundary_sha256", admin_boundary_path),
         ("service_boundary_sha256", service_boundary_path),
-        ("mask_sha256", mask_path),
-    ]:
+    ]
+    if facility_masks:
+        bindings.append(("mask_sha256", mask_path))
+    for key, path in bindings:
         if sha256_file(Path(path)) != old[key]:
             raise ValueError("Physical seed differs from requested " + key)
     if CRS.from_user_input(old["area_crs"]) != CRS.from_user_input(area_crs):
@@ -263,8 +289,9 @@ def build_delivery_access_context(
     skeleton = gpd.read_parquet(seed_path)
     if skeleton.crs != CRS.from_user_input(area_crs):
         raise ValueError("Physical seed geometry has a different metric CRS")
-    masks = gpd.read_parquet(mask_path)
-    physical, permissions = permission_inventory(skeleton, source_dir, masks)
+    masks = gpd.read_parquet(mask_path) if mask_path is not None else gpd.GeoDataFrame(geometry=[], crs=area_crs)
+    physical, permissions = permission_inventory(skeleton, source_dir, masks,
+        allow_private_through=allow_private_through, facility_masks=facility_masks)
     output_dir.mkdir(parents=True, exist_ok=True)
     physical.to_parquet(output_dir / "physical_roads.parquet", index=False)
     graph = nx.MultiDiGraph(crs="EPSG:4326")
@@ -296,6 +323,7 @@ def build_delivery_access_context(
                 legal_access_tier=row.legal_access_tier,
                 through_routing_allowed=row.access_layer == "operational_public",
                 delivery_authorization_assumed=bool(row.delivery_authorization_assumed),
+                private_through_routing_assumed=bool(getattr(row, "private_through_routing_assumed", False)),
                 strict_motor_access_allowed=bool(row.strict_motor_access_allowed),
                 charging_motor_access_allowed=bool(row.charging_motor_access_allowed),
                 charging_access_basis=row.charging_access_basis,
@@ -315,7 +343,8 @@ def build_delivery_access_context(
     outside = dict(zip(ns, shapely.distance(shapely.points([node_metric[n] for n in ns]), admin)))
     citynodes = {n for n, d in outside.items() if d <= 1e-6}
     trials, choices = [], []
-    for km in BUFFER_LADDER_KM:
+    buffers = BUFFER_LADDER_KM if selection_buffer_km is None else (float(selection_buffer_km),)
+    for km in buffers:
         candidate = public.subgraph([n for n in ns if outside[n] <= 1000 * km + 1e-6])
         component = max(
             nx.weakly_connected_components(candidate),
@@ -356,6 +385,11 @@ def build_delivery_access_context(
     context = DeliveryAccessContext(
         core, access, physical, reference, inbound, outbound, area_crs, water
     )
+    if allow_private_through or not facility_masks:
+        from .current_access import CURRENT_DELIVERY_POLICY
+        context.policy = CURRENT_DELIVERY_POLICY
+    context.facility_masks = bool(facility_masks)
+    context.allow_private_through = bool(allow_private_through)
     context.save(output_dir)
     ox.save_graphml(public.subgraph(citynodes).copy(), output_dir / "graph_all.graphml")
     names = [
@@ -369,17 +403,21 @@ def build_delivery_access_context(
     manifest = dict(
         schema="evrptw_delivery_terminal_access_v2",
         topology_contract=TOPOLOGY_CONTRACT,
-        policy=POLICY,
+        policy=context.policy,
+        mask_scope_contract="explicit_purpose_v1_legacy_missing_is_all_motor",
+        physical_mask_fields=["sensitive_interior_road", "delivery_only_interior_road"],
         city_slug=extraction["city_slug"],
         source=extraction,
         area_crs=area_crs,
         admin_boundary_sha256=sha256_file(Path(admin_boundary_path)),
         service_boundary_sha256=sha256_file(Path(service_boundary_path)),
-        mask_sha256=sha256_file(Path(mask_path)),
+        mask_sha256=sha256_file(Path(mask_path)) if mask_path is not None else None,
         physical_seed_sha256=sha256_file(seed_path),
         permissions=permissions,
-        selected_buffer_km=BUFFER_LADDER_KM[pick],
-        selection="smallest buffer recovering all city public nodes reachable at maximum envelope",
+        selected_buffer_km=buffers[pick],
+        selection="fixed_administrative_buffer" if selection_buffer_km is not None else "smallest buffer recovering all city public nodes reachable at maximum envelope",
+        facility_category_masks=bool(facility_masks),
+        ordinary_private_through_routing=bool(allow_private_through),
         buffer_trials=trials,
         core_nodes=len(core),
         core_directed_edges=core.number_of_edges(),
@@ -397,6 +435,8 @@ def build_delivery_access_context(
             "terminal_access.py": sha256_file(Path(__file__).with_name("terminal_access.py")),
             "road_tags.py": sha256_file(Path(__file__).with_name("road_tags.py")),
             "public_locations.py": sha256_file(Path(__file__).with_name("public_locations.py")),
+            **({"current_access.py": sha256_file(Path(__file__).with_name("current_access.py"))}
+               if allow_private_through or not facility_masks else {}),
         },
         outputs={n: sha256_file(output_dir / n) for n in names},
     )
@@ -440,6 +480,9 @@ class DeliveryAccessContext(LocalAccessContext):
     policy = POLICY
 
     def anchor(self, locations, *, masks=None, footprints=None, water=None, selected_edge_ids=None):
+        if not getattr(self, "facility_masks", True):
+            from .current_access import access_only_masks
+            masks = access_only_masks(masks)
         result = super().anchor(
             locations,
             masks=masks,
@@ -504,7 +547,7 @@ class DeliveryAccessContext(LocalAccessContext):
         authorized = result.local_access_confirmed & result.delivery_authorization_assumed
         result.loc[authorized, "access_status"] = "modeled_authorized_terminal_roundtrip"
         result = apply_frontage_guard(result, self.physical, self.area_crs)
-        result["road_access_policy"] = POLICY
+        result["road_access_policy"] = self.policy
         return result
 
     def _strict_context(self):

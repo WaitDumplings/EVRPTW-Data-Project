@@ -404,8 +404,19 @@ def build_project(config, cities=None, *, verify=True):
         return _build_project(config, cities, verify=verify)
 
 
-def verify_output(output):
+def verify_output(output, *, historical=False, report_dir=None, cities=None):
     output = Path(output).expanduser().resolve()
+    if historical:
+        from .historical import verify_historical
+
+        return verify_historical(output, report_dir=report_dir, cities=cities)
+    if report_dir is not None or cities is not None:
+        raise ValueError("--report-dir and --cities require --historical")
+    if (output / "stage1_freeze.json").is_file():
+        raise ValueError(
+            "This is an immutable historical CLE. Use `evrptw-data verify "
+            f"{output} --historical --report-dir NEW_DIRECTORY` to run its saved verifier."
+        )
     inventory = output / ".work/inventory.json"
     selection = []
     project = output / ".work/project.json"

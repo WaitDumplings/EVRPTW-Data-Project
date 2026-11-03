@@ -21,6 +21,7 @@ import shapely
 from shapely.strtree import STRtree
 
 from .osm_graph import _run_osmium, _tag_values
+from .public_locations import explicit_delivery_prohibited
 from .util import sha256_file, write_json
 
 _TERMINAL_HIGHWAYS = {"service", "residential", "living_street", "unclassified"}
@@ -58,8 +59,10 @@ def _normalized_values(value: Any) -> list[str]:
 
 
 def _effective_motor_access(data: dict[str, Any]) -> tuple[str, str]:
-    """Resolve motor access using the most specific populated OSM tag."""
+    """Resolve vehicle permission, retaining an independent delivery veto."""
 
+    if explicit_delivery_prohibited(data):
+        return "access:delivery", "prohibited"
     for field in _MOTOR_ACCESS_PRECEDENCE:
         values = _normalized_values(data.get(field))
         if not values:

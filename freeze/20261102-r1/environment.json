@@ -1,0 +1,26 @@
+{
+  "schema": "stage1_local_observed_environment_v1",
+  "python": "3.11.11 | packaged by conda-forge | (main, Dec  5 2024, 08:47:03) [Clang 18.1.8 ]",
+  "platform": "macOS-15.7.4-arm64-arm-64bit",
+  "packages": {
+    "geopandas": "1.1.3",
+    "shapely": "2.1.2",
+    "osmnx": "2.1.0",
+    "networkx": "3.6.1",
+    "numpy": "2.3.5",
+    "pandas": "2.3.3",
+    "pyarrow": "23.0.1",
+    "pyogrio": "0.12.1",
+    "pyproj": "3.7.2",
+    "scipy": "1.17.0",
+    "requests": "2.34.2",
+    "matplotlib": "3.10.8",
+    "osmium": null,
+    "pytest": "9.1.1",
+    "ruff": "0.16.1"
+  },
+  "geos": "3.13.1",
+  "proj": "9.5.1",
+  "cross_platform_lock": false,
+  "linux_server_validation": "pending"
+}

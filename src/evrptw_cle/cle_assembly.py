@@ -44,6 +44,14 @@ def canonical_locations(customer, depot, charging):
         out["source_identity"] = table.site_identity_source.to_numpy() if kind == "customer" else "osm_spatial_facility_group" if kind == "depot" else "afdc_colocated_source_members"
         out["scope_unresolved"] = table.get("site_scope_unresolved",pd.Series(False,index=table.index)).astype(bool).to_numpy()
         out["scope_review_required"] = table.get("site_scope_review_required",pd.Series(False,index=table.index)).astype(bool).to_numpy()
+        if kind == "customer":
+            for field in ["residential_use", "residential_source", "units_method", "units_source",
+                          "units_scope", "units_raw_nsi", "units_review_status", "units_independently_verified",
+                          "purpose_review_status", "selected_nsi_fd_id", "selected_nsi_resunits",
+                          "capacity_units", "height_neighbor_estimated", "neighbor_reference_id",
+                          "scale_assessed", "scale_gate_status"]:
+                if field in table:
+                    out[field] = table[field].to_numpy()
         frames.append(out)
     result = gpd.GeoDataFrame(pd.concat(frames, ignore_index=True), crs=4326)
     if result.location_id.duplicated().any() or result.source_location_id.isna().any():

@@ -1,0 +1,46 @@
+{
+  "method_id": "building_nsi_representative_empirical_rms_units_v1",
+  "entity": "canonical Microsoft building or complete OSM subdivision child with Microsoft provenance",
+  "sources": {
+    "microsoft_index": "2026-08-13",
+    "osm_snapshot": "2026-10-25",
+    "nsi_release": "2026",
+    "nsi_archive": "2026-10-26"
+  },
+  "candidate_denominator": "in-service matched geometry-clear residential and unknown buildings; exclude explicit nonresidential/mixed and clear zero-only unknown",
+  "nsi": {
+    "ordinary_occupancies": ["RES1", "RES2", "RES3"],
+    "one_representative_per_building": true,
+    "one_assignment_per_genuine_source_group": true,
+    "sum_source_units": false,
+    "raw_values_immutable": true
+  },
+  "neighbor": {
+    "reference": "original clear single-source residential observations passing the independent building-scale screen",
+    "features": ["planar_xy_as_one_group", "log_polygon_area", "log_original_osm_levels_or_independent_height"],
+    "scale": "RMS differences of independent same-type geographic reference-neighbor pairs",
+    "target": "equal mean squared group contribution on scale-fitting pairs",
+    "k": 8,
+    "scale_probe_count": 2000,
+    "estimator": "weighted median log units with weights (1+distance)^-2",
+    "support": "held-out calibrated mean neighbor distance and weighted log-unit P90-P10",
+    "calibration_target_retention": 0.95,
+    "imputed_labels_enter_reference": false
+  },
+  "scale_screen": {
+    "min_unit_area_m2": 10.0,
+    "floor_to_floor_m": 3.048,
+    "floors_proxy": "max(ceil(independent height / floor_to_floor_m), ceil(OSM building:levels))",
+    "upper_proxy": "max(1,floor(polygon area * floors_proxy / min_unit_area_m2))",
+    "multiunit_requires_assessed_scale": true,
+    "missing_height": "similarity-supported P90 of original independent training heights; explicitly marked",
+    "one_unit_exception": true,
+    "interpretation": "loose consistency screen, not a measured capacity or legal occupancy limit"
+  },
+  "units_source": ["nsi", "neighbor", "unresolved"],
+  "units_method": ["nsi_representative", "neighbor_estimated", "unresolved"],
+  "default_profile": "unrestricted",
+  "manual_record_repairs": false,
+  "additional_data_sources": false,
+  "stage2_included": false
+}

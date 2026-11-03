@@ -1,79 +1,82 @@
 # CLE output and Python interface
 
-Each city is a persistent Stage 1 environment. It has no activated orders or
-operating-day vehicle fleet.
+The building-first CLE schema is `evrptw_building_first_cle_v1`. Construct it with `evrptw-cle stage1 run <config>`; inputs and parameters are documented in the [run guide](stage1/SERVER_IMPLEMENTATION.zh-CN.md).
+
+Each city is a persistent geographic environment. Its core identity is `(city_slug, location_id)`.
 
 ```text
-outputs/cle/
-  build_status.json
-  stage1_verification.json
-  logs/
-  cities/dallas/
-    cle_manifest.json
-    cle_verification.json
-    locations.parquet
-    location_access_costs.parquet
+<output>/
+  customer_coverage.csv
+  cities/<city>/
+    customer_inputs/
     boundaries/
     roads/
+    speeds/
     customers/
     depots/
     charging/
-    speeds/
-    private_sources/
+    locations.parquet
+    location_access_costs.parquet
+    cle_manifest.json
+    stage1_validation.json
 ```
 
 | Layer | Contents |
-| --- | --- |
-| boundaries | Administrative and modeled service geometry |
-| roads | Public graph, delivery terminal graph, physical roads and directed access evidence |
-| customers | Residential locations, native NSI members, source-scope ledger and connectors |
-| depots | Source candidates, cross-operator spatial groups and access rows |
-| charging | Native source members, equipment configurations and charging-purpose access |
-| speeds | Native directed-edge legal/reference weekday/weekend costs and graph memberships |
-| private_sources | Local raw evidence needed for independent checks; not a public export |
+|---|---|
+| `boundaries` | Administrative and modeled land service surfaces |
+| `roads` | Native physical/directed edges, delivery route graph, reference SCC and remaining purpose-terminal access |
+| `speeds` | Edge limits, imputation source, state profile, weekday/weekend reference costs and graph membership |
+| `customer_inputs` | Canonical population, service scope, original NSI pool/ownership, reference split, fitted RMS scales/support gates, representative assignment and unresolved reasons |
+| `customers` | Building locations, unit provenance and full-footprint road attachment |
+| `depots` | Canonical facility/park locations, original members and directed access |
+| `charging` | Canonical AFDC locations, members, all equipment configurations and selected reference configuration |
 
-locations.parquet is the canonical index. location_id is type-prefixed and
-unique inside a city. Across cities use (city_slug, location_id). Fields include
-location_type, source_location_id, geometry, candidate_eligible, pending_reason,
-nullable residential_units and source-table/row foreign keys. A depot group
-selects a deterministic usable source row as its access representative; all
-members remain in the depot layer.
+## Customer attributes
 
-candidate_eligible is a static Stage 1 qualification. Pending locations remain
-in the CLE but are excluded from the default eligible pool. A historical native
-diagnostic column does not override the canonical eligibility and pending reason.
+The canonical building polygon and `entity_id` identify the location. Microsoft composite parents retired during OSM subdivision remain in provenance; the child polygon supplies the final area and access geometry.
 
-location_access_costs.parquet binds usable locations to connector length and
-native terminal ingress/egress costs. Connector speed, orders, service times,
-vehicle selection and dense OD matrices are deferred to Stage 2.
+| Field | Meaning |
+|---|---|
+| `units_raw_nsi` | Available original value; all individual observations remain in the NSI ledger |
+| `units_final` / `residential_units` | Positive integer used for the retained building, otherwise null; layer-specific names map to the same final attribute |
+| `units_source` | `nsi`, `neighbor` or `unresolved` |
+| `units_method` | `nsi_representative` or `neighbor_estimated` for an assigned value; unresolved rows retain an unresolved status |
+| `selected_nsi_fd_id`, `selected_nsi_resunits` | Selected original NSI record/count; retained as evidence even if the final scale gate rejects the assignment |
+| `units_scope` | Building scope of the final modeled attribute |
+| `residential_use` | Native/derived use evidence, separate from final units |
+| `use_type` | OSM house/apartments/generic branch used by the neighbor model |
+| `height_original_m`, `levels` | Original independent Microsoft/OSM height and OSM storeys |
+| `capacity_units`, `capacity_height_missing` | Loose unit-capacity proxy and missing-assessment flag; a known passing proxy is required for multi-unit admission |
+| `height_neighbor_estimated` | Whether a missing height was estimated for the loose scale screen |
+| `neighbor_*` | Metric cost, neighbor counts, unit dispersion, reference IDs and geographic distances |
+| `quality_*` | Calibration stratum, cost/dispersion limits and support decisions |
+| `result_reason` | NSI representative, neighbor estimate or the mutually exclusive unresolved reason |
+
+One NSI record and one genuine source-footprint group supply at most one selected building. `selected_nsi_fd_id` points to that representative. Multiple source units are not summed, and a neighbor estimate does not overwrite the original NSI observation. Fitted scales and support gates bind to the source/reference/configuration hashes.
+
+## Eligibility and access
+
+Building attribute coverage counts assigned positive units in the fixed candidate population. It is measured before road attachment. `candidate_eligible` in the canonical location table additionally reflects the component's static rules and access state. Pending records retain their source and reason.
+
+`location_access_costs.parquet` stores geometry connector lengths, native directional offsets, ingress/egress gateways and any terminal paths to the common route graph. Road portions use the bound edge speeds. Connector lengths and conversion coefficients let the downstream scenario choose its connector speed.
+
+A depot location references one stable usable access member and retains all facility/park members. Charging locations retain AFDC native members, public/access conditions and compatible configurations; native, assigned and vehicle-capped power fields remain distinct.
 
 ## Reading
 
 ```python
 from evrptw_cle.cle_reader import CityLogisticsEnvironment
 
-cle = CityLogisticsEnvironment("outputs/cle/cities/dallas")
+cle = CityLogisticsEnvironment("outputs/stage1-building-first/cities/dallas")
 locations = cle.locations()
-costs = cle.access_costs()
-public = cle.graph("public")
-delivery = cle.graph("delivery_terminal")
-charging = cle.graph("charging_terminal")
+access = cle.access_costs()
+route = cle.graph("public")
+delivery_access = cle.graph("delivery_terminal")
+charging_access = cle.graph("charging_terminal")
 ```
 
-The reader requires an independent certificate matching the city manifest and
-checks saved file hashes by default. Each graph receives its matching native
-edge weights. Never compose terminal graphs into an unrestricted public graph.
+The graph name `public` is the reader's route-graph key; its saved policy specifies modeled ordinary-private through-routing. Purpose-terminal edges keep their own directional access semantics. The reader binds each graph to its matching native edge weights and checks saved file hashes.
 
-## Validation and versioning
+Assembly records inputs, method/configuration, output hashes and common-road bindings in `cle_manifest.json`. `stage1_validation.json` records saved-data validation; `stage1 verify` runs it separately. Historical CLEs retain their own source/code/validation receipts.
 
-build performs one independent data-validation pass by default. Use verify to
-run it separately. This validates saved files and never runs unit tests or
-compares against the developer's historical production results.
-
-inspect displays saved counts and certificate/manifest binding; it is a quick
-metadata view and does not recheck every data byte. The reader and verify perform
-the stronger checks.
-
-A frozen historical CLE keeps its saved code and input version. Use that version
-for re-auditing; this repository's newer implementation is not a substitute for
-the historical verifier. Builds never overwrite a stage1_freeze.json run.
+Stage 2 reads stable building/depot/charging identities and final unit provenance, then generates delivery-day activation, packages, time windows, service times and instance matrices.

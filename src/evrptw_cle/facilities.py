@@ -313,7 +313,9 @@ def build_depot_layer(
     footprints=None,
 ) -> tuple[gpd.GeoDataFrame, dict[str, Any]]:
     """Materialize the public depot pool against directed eligible road edges."""
-    depots, source_filter = filter_public_locations(depots, masks)
+    facility_categories = getattr(access_context, "facility_masks", True)
+    depots, source_filter = filter_public_locations(depots, masks,
+                                                    facility_categories=facility_categories)
     if depots.empty:
         raise ValueError("No public depot locations remain; never fall back to excluded hosts")
     depots["facility_anchor_id"] = depots["candidate_id"].astype(str)

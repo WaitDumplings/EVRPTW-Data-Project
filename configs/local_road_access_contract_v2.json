@@ -30,14 +30,31 @@
     "purpose_only_roads": "private, destination/customers and service roads are terminal-only; never public through-routing",
     "source_tag_absence": "absence of a prohibition is a modeling default, not observed unrestricted real access"
   },
+  "charging_access": {
+    "delivery_purpose_permission_inherited": false,
+    "invited_private_permission_inherited": false,
+    "permission_precedence": [
+      "motorcar",
+      "motor_vehicle",
+      "vehicle",
+      "access"
+    ],
+    "policy": "charging_generic_motor_access_v2_purpose_scoped_masks",
+    "sensitive_and_generic_motor_masks_apply": true
+  },
   "connector_obstacles": {
     "all_roles": [
-      "identified exclusion masks",
+      "purpose-applicable identified exclusion masks",
       "mapped city water",
       "nonhosting or restricted motor-road crossings",
       "other Microsoft buildings not intersecting the source location geometry"
     ],
     "entrance_ground_truth": false,
+    "purpose_masks": {
+      "charging": "all_motor only; ignore explicitly delivery_only masks",
+      "delivery": "all_motor and delivery_only",
+      "legacy_missing_scope": "all_motor; do not infer a historical purpose"
+    },
     "unmapped_obstacles": "remain an explicit limitation",
     "water_intersection_numerical_tolerance_m": 0.01
   },
@@ -62,6 +79,20 @@
     "track"
   ],
   "frontage_contract": "delivery_frontage_contract_v1.json",
+  "independent_delivery_prohibition": {
+    "applies_to": [
+      "customer",
+      "depot"
+    ],
+    "charging_purpose": "evaluated using generic motor permission, not delivery-purpose permission",
+    "prohibited_values": [
+      "no",
+      "prohibited",
+      "none"
+    ],
+    "source_tag": "access:delivery",
+    "vehicle_allowance_overrides": false
+  },
   "local_candidate_check": {
     "alternative_permissions": "strict motor access only; no private authorization used to rescue a failed nearest frontage",
     "checks": "real directed entry and exit plus the same exclusion, mapped-water, road-crossing and customer-building obstacles",
@@ -82,6 +113,7 @@
     ]
   },
   "local_inventory": "available valid complete ways in the frozen regional PBFs intersecting city + 20km; provider extract coverage bounds the effective domain",
+  "mask_scope_contract": "explicit_purpose_v1_legacy_missing_is_all_motor",
   "method_references": [
     "https://wiki.openstreetmap.org/wiki/Key:access",
     "https://wiki.openstreetmap.org/wiki/Tag:access%3Dprivate",
@@ -98,7 +130,13 @@
     "access:delivery",
     "access"
   ],
-  "policy": "delivery_terminal_access_v2",
+  "permission_precedence_scope": "Vehicle precedence is evaluated after the independent delivery-purpose veto; it does not override that veto.",
+  "physical_mask_fields": [
+    "sensitive_interior_road",
+    "delivery_only_interior_road"
+  ],
+  "point_barrier_geometry_scope": "A Point/MultiPoint barrier classified only as motor_access_prohibited does not create a 50m facility area, for either delivery-only or generic motor prohibitions. Native node/way restrictions remain; independently sensitive facility POIs keep their buffer and prohibited polygons keep their purpose scope.",
+  "policy": "delivery_terminal_access_v3_purpose_scoped_masks",
   "public_export": "exclude private build masks, excluded-sensitive source inventories and internal blocked-road inventories",
   "raw_source_unit_values_changed": false,
   "road_selection": {
@@ -117,8 +155,8 @@
     "synthetic_intercomponent_edges": false
   },
   "schema": "evrptw_local_road_access_contract_v2",
-  "scope": "customer/depot location components; common charging/speed rebinding, CLE structure/construction and instance activation remain separate audited steps",
-  "sensitive_hosts": "public_location_exclusions_v1 source/anchor policy; source-safe uncertain access retained without publishing excluded anchors",
+  "scope": "Stage1 customer/depot/charging locations on the common directed city road environment, with shared source-edge legal/reference speeds and CLE construction; Stage2 activation is a separate stage.",
+  "sensitive_hosts": "public_location_exclusions_v1.json; runtime policy public_location_exclusions_v4_geometry_scope; strong facility tags and actual access bans remain independent of jurisdiction name/operator text",
   "source_registry": "phase1_sources.template.json",
   "terminal_paths": {
     "connection": "shared OSM nodes; never proximity-only fabricated junctions",
@@ -127,7 +165,7 @@
     "gateway_choice": "independently shortest directed ingress/egress to the public reference SCC; not a proof of globally optimal OD choice over all entrances",
     "legacy_matrix_consumer": "reject terminal rows rather than silently omit access paths",
     "metric_claim": "do not assume symmetry or triangle inequality for a purpose-specific directed terminal OD construction",
-    "operating_speed": "not inferred by location admission; explicit smoke-test speeds do not constitute a production speed layer",
+    "operating_speed": "Common source-edge legal and state reference speed layers are bound to the actual delivery and charging road union; access admission alone does not infer speed.",
     "pair_consumer": "evrptw_cle.terminal_pair.materialize_local_access_pair",
     "pair_scope": "only source egress and destination ingress are materialized, with source ownership and authorization metadata",
     "public_through_routing": false

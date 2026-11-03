@@ -5,11 +5,13 @@
   "data_bundled": false,
   "instance_activation_included": false,
   "commands": [
+    "stage1",
     "init",
     "plan",
     "build",
     "inspect",
-    "verify"
+    "verify",
+    "history"
   ],
   "models": [
     "public_road_graph",
@@ -19,5 +21,37 @@
     "spatial_depot_groups",
     "native_charging_configurations",
     "state_reference_speeds"
-  ]
+  ],
+  "current_stage1": {
+    "schema": "evrptw_building_first_stage1_v1",
+    "entrypoint": "evrptw-data stage1",
+    "implementation": "evrptw_cle.stage1",
+    "entity": "canonical matched Microsoft-OSM building",
+    "customer_policy": "building_nsi_representative_empirical_rms_units_v1",
+    "field_provenance": true,
+    "units_sources": [
+      "nsi",
+      "neighbor",
+      "unresolved"
+    ],
+    "manual_record_repairs": false,
+    "additional_data_sources": false,
+    "automatic_freeze": false,
+    "building_attributes": {
+      "snapshot": "2026-11-02",
+      "candidate_buildings": 4012462,
+      "admitted_buildings": 3922741,
+      "nsi_buildings": 3194252,
+      "neighbor_buildings": 728489,
+      "unfilled_buildings": 89721,
+      "coverage_pct": 97.7639414404423,
+      "multiunit_requires_assessed_scale": true
+    },
+    "whole_cle_rebuilt_for_this_snapshot": false,
+    "implementation_frozen": true,
+    "freeze_id": "stage1-20261102-r1",
+    "freeze_manifest": "freeze/20261102-r1/MANIFEST.json",
+    "cle_data_frozen": false,
+    "server_generation_status": "pending"
+  }
 }

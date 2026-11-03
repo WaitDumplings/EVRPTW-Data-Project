@@ -1,0 +1,22 @@
+{
+  "schema": "evrptw_building_first_cle_v1",
+  "scope": "Stage1 city environment before instance activation",
+  "location_unit": "canonical Microsoft building or complete OSM subdivision child, merged logistics site, AFDC charging site",
+  "customer_units_source": ["nsi", "neighbor", "unresolved"],
+  "customer_units_method": ["nsi_representative", "neighbor_estimated", "unresolved"],
+  "customer_policy": "building_nsi_representative_empirical_rms_units_v1",
+  "multiunit_admission": "finite loose area/storey upper proxy and assigned units no greater than proxy",
+  "customer_geometry": "unchanged complete canonical footprint; polygon-boundary road projection",
+  "customer_attribute_coverage": "admitted candidate buildings / fixed candidate buildings, before road access",
+  "road_access_eligibility": "separate from building-attribute coverage",
+  "canonical_location_key": "location_type + ':' + source_location_id",
+  "road_policy": "directed delivery routing; ordinary private roads may be traversed; explicit prohibitions and barriers retained",
+  "source_edge_key": ["edge_u", "edge_v", "edge_key"],
+  "length_units": "metres",
+  "speed_units": "km/h",
+  "time_units": "seconds",
+  "cost_layers": ["legal", "reference_weekday", "reference_weekend"],
+  "connector_cost": "geometric length and time_s_per_inverse_kph; vehicle/scenario speed belongs to Stage2",
+  "stage2_included": false,
+  "code_freeze_and_cle_data_freeze_are_separate": true
+}

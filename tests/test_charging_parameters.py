@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+import pytest
 
 from evrptw_cle.charging_parameters import select_reference_configurations
 
@@ -76,6 +77,15 @@ def test_reported_compatible_configuration_keeps_access_and_never_sums():
     assert configs.power_qa_flag.sum() == 1 and configs.is_selected.sum() == 1
     assert summary["selected_reported_power"] == 1
     assert result.iloc[0].capped_pre_derating_kw == 80
+
+
+@pytest.mark.parametrize("motorcar, expected", [("yes", True), ("no", False)])
+def test_unit_source_delivery_ban_does_not_become_generic_charging_ban(motorcar, expected):
+    locations, members, units = fixture()
+    units["motorcar"] = motorcar
+    units["access:delivery"] = "no"
+    result, _, _, _ = select_reference_configurations(locations, members, units, MEDIANS)
+    assert bool(result.reference_vehicle_eligible.iloc[0]) == expected
 
 
 def test_j1772_ac_is_available_even_if_same_member_has_incompatible_dc():

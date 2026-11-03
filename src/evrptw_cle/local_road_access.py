@@ -28,6 +28,7 @@ from shapely.ops import substring, transform
 from shapely.strtree import STRtree
 
 from .customer_access import attach_footprint_access
+from .public_locations import masks_for_purpose
 from .road_tags import DELIVERY_ROAD_CLASSES, EXCLUDED_ANCHOR_ROAD_CLASSES
 from .terminal_access import (
     ACCESS_NODE_TAG_CONTRACT,
@@ -36,7 +37,7 @@ from .terminal_access import (
 )
 from .util import sha256_file, write_json
 
-POLICY = "local_first_real_osm_access_v1"
+POLICY = "local_first_real_osm_access_v2_purpose_scoped_masks"
 MOTOR_CLASSES = DELIVERY_ROAD_CLASSES | EXCLUDED_ANCHOR_ROAD_CLASSES | {"track"}
 OPERATING_ROAD_CLASSES = MOTOR_CLASSES - {"track", "construction", "proposed", "raceway"}
 BUFFER_LADDER_KM = (0, 1, 2, 5, 10, 20)
@@ -89,7 +90,7 @@ def repair_terminal_path_geometry(frame, physical):
     return result, True
 
 
-def classify_way(tags):
+def classify_way(tags, *, allow_private_through=False):
     highway = tags.get("highway", "")
     _, legal = _effective_motor_access(tags)
     if highway not in MOTOR_CLASSES or tags.get("area") == "yes":
@@ -105,6 +106,14 @@ def classify_way(tags):
         allowed = allowed and terminal["terminal_core_eligible"]
     if highway not in OPERATING_ROAD_CLASSES:
         allowed = False
+    if allow_private_through:
+        from .current_access import motor_permission
+        permission = motor_permission(tags)
+        allowed = permission["allowed"] and highway in OPERATING_ROAD_CLASSES
+        if permission["private_through_routing_assumed"]:
+            layer = "operational_public"
+        elif not permission["through"]:
+            layer = "osm_terminal_only"
     return dict(
         highway=highway,
         legal_access_tier=legal,
@@ -170,7 +179,8 @@ def _forest(graph, seeds, *, reverse=False):
 
 
 def build_access_context(
-    *, source_dir, admin_boundary_path, service_boundary_path, mask_path, output_dir, area_crs
+    *, source_dir, admin_boundary_path, service_boundary_path, mask_path, output_dir, area_crs,
+    selection_buffer_km=None, allow_private_through=False, facility_masks=True,
 ):
     """Build reproducible public/access graphs and the local physical inventory."""
     source_dir = Path(source_dir)
@@ -199,14 +209,30 @@ def build_access_context(
             "osmid",
         ]
     )
-    masks = gpd.read_parquet(mask_path).to_crs(area_crs)
-    masktree = STRtree(masks.geometry.to_numpy()) if len(masks) else None
+    if allow_private_through:
+        from .current_access import motor_permission
+        blocked_nodes = set(nodes.loc[
+            nodes.tags_json.map(lambda value: not motor_permission(json.loads(value))["allowed"]),
+            "osmid"].astype(str))
+    if mask_path is None:
+        masks = gpd.GeoDataFrame(geometry=[], crs=area_crs)
+    else:
+        masks = gpd.read_parquet(mask_path).to_crs(area_crs)
+    if not facility_masks:
+        from .current_access import access_only_masks
+        masks = access_only_masks(masks)
+    generic_masks = masks_for_purpose(masks, "charging")
+    delivery_masks = masks.loc[
+        masks.get("exclusion_scope", pd.Series("all_motor", index=masks.index)).eq("delivery_only")
+    ]
+    masktree = STRtree(generic_masks.geometry.to_numpy()) if len(generic_masks) else None
+    delivery_masktree = STRtree(delivery_masks.geometry.to_numpy()) if len(delivery_masks) else None
     ways = gpd.read_parquet(source_dir / "osm_ways.parquet").to_crs(area_crs)
     parsed = []
     usage = Counter()
     for row in ways.itertuples():
         tags = json.loads(row.tags_json)
-        kind = classify_way(tags)
+        kind = classify_way(tags, allow_private_through=allow_private_through)
         if kind is None:
             continue
         ids = [str(n) for n in json.loads(row.node_ids_json)]
@@ -245,12 +271,18 @@ def build_access_context(
             ).hexdigest()[:20]
             allowed = kind["allowed"] and not any(n in blocked_nodes for n in ids[start : end + 1])
             mask_hit = False
+            delivery_mask_hit = False
             if masktree is not None:
                 # Do not cut public roads merely because they pass beside a POI
                 # mask. Interior facility roads wholly inside a mask are blocked.
                 near = masktree.query(segment)
-                mask_hit = any(masks.geometry.iloc[int(j)].covers(segment) for j in near)
-                allowed = allowed and not mask_hit
+                mask_hit = any(generic_masks.geometry.iloc[int(j)].covers(segment) for j in near)
+            if delivery_masktree is not None:
+                near = delivery_masktree.query(segment)
+                delivery_mask_hit = any(
+                    delivery_masks.geometry.iloc[int(j)].covers(segment) for j in near
+                )
+            allowed = allowed and not mask_hit and not delivery_mask_hit
             refs = []
             forward, backward = _directions(tags)
             direction_status = _direction_status(tags)
@@ -292,6 +324,7 @@ def build_access_context(
                 source_way_motor_allowed=kind["allowed"] and bool(direction_resolved),
                 node_access_blocked=any(n in blocked_nodes for n in ids[start : end + 1]),
                 sensitive_interior_road=mask_hit,
+                delivery_only_interior_road=delivery_mask_hit,
                 anchor_class_eligible=kind["anchor_class_eligible"],
                 osmid=osmid,
                 maxspeed=tags.get("maxspeed", ""),
@@ -347,7 +380,8 @@ def build_access_context(
     citynodes = {n for n, d in outside.items() if d <= 1e-6}
     trials = []
     selections = []
-    for buffer_km in BUFFER_LADDER_KM:
+    buffers = BUFFER_LADDER_KM if selection_buffer_km is None else (float(selection_buffer_km),)
+    for buffer_km in buffers:
         retain = {n for n in all_pubnodes if outside[n] <= buffer_km * 1000 + 1e-6}
         candidate = public.subgraph(retain)
         components = nx.weakly_connected_components(candidate)
@@ -395,14 +429,18 @@ def build_access_context(
         schema="evrptw_local_first_road_access_v1",
         topology_contract=TOPOLOGY_CONTRACT,
         policy=POLICY,
+        mask_scope_contract="explicit_purpose_v1_legacy_missing_is_all_motor",
+        physical_mask_fields=["sensitive_interior_road", "delivery_only_interior_road"],
         city_slug=extraction["city_slug"],
         source=extraction,
         area_crs=area_crs,
         admin_boundary_sha256=sha256_file(Path(admin_boundary_path)),
         service_boundary_sha256=sha256_file(Path(service_boundary_path)),
-        mask_sha256=sha256_file(Path(mask_path)),
-        selection="smallest buffer recovering every city public node reachable at the maximum real-OSM envelope; never stop at global percentage alone",
-        selected_buffer_km=BUFFER_LADDER_KM[pick],
+        mask_sha256=sha256_file(Path(mask_path)) if mask_path is not None else None,
+        selection="fixed_administrative_buffer" if selection_buffer_km is not None else "smallest buffer recovering every city public node reachable at the maximum real-OSM envelope; never stop at global percentage alone",
+        selected_buffer_km=buffers[pick],
+        facility_category_masks=bool(facility_masks),
+        ordinary_private_through_routing=bool(allow_private_through),
         buffer_trials=trials,
         reference_scc_nodes=len(reference),
         core_nodes=len(core),
@@ -416,6 +454,9 @@ def build_access_context(
             "local_road_access.py": sha256_file(Path(__file__)),
             "terminal_access.py": sha256_file(Path(__file__).with_name("terminal_access.py")),
             "road_tags.py": sha256_file(Path(__file__).with_name("road_tags.py")),
+            "public_locations.py": sha256_file(Path(__file__).with_name("public_locations.py")),
+            **({"current_access.py": sha256_file(Path(__file__).with_name("current_access.py"))}
+               if allow_private_through or not facility_masks else {}),
         },
         outputs={
             name: sha256_file(output_dir / name)
@@ -460,15 +501,22 @@ class LocalAccessContext:
     def load(cls, dest):
         dest = Path(dest)
         m = json.loads((dest / "access_context_manifest.json").read_text())
-        if cls is LocalAccessContext and m.get("policy") == "delivery_terminal_access_v2":
+        from .context_validation import DELIVERY_CONTEXT_POLICIES
+
+        if cls is LocalAccessContext and m.get("policy") in DELIVERY_CONTEXT_POLICIES:
             from .delivery_access import DeliveryAccessContext
 
             return DeliveryAccessContext.load(dest)
-        if m.get("policy") == "delivery_terminal_access_v2":
+        if m.get("policy") in DELIVERY_CONTEXT_POLICIES:
             from .frontage import FRONTAGE_PATH
 
             if sha256_file(FRONTAGE_PATH) != m.get("frontage_contract_sha256"):
-                raise ValueError("Changed delivery frontage contract; rebuild context explicitly")
+                raise ValueError(
+                    "Changed delivery frontage contract. For a historical CLE, select its "
+                    "receipt-bound code_snapshot (`evrptw-data history COHORT`; see "
+                    "docs/HISTORICAL_CLE.md). New construction needs a fresh versioned "
+                    "context; never rewrite the saved policy hash."
+                )
         for name, digest in m["outputs"].items():
             if sha256_file(dest / name) != digest:
                 raise ValueError("Changed access context " + name)
@@ -496,7 +544,7 @@ class LocalAccessContext:
                     .geometry.union_all()
                 )
             )
-        return cls(
+        context = cls(
             ox.load_graphml(
                 dest / "graph_operational.graphml",
                 node_dtypes={"osmid": str},
@@ -514,6 +562,10 @@ class LocalAccessContext:
             m["area_crs"],
             water,
         )
+        context.policy = m["policy"]
+        context.facility_masks = m.get("facility_category_masks", True)
+        context.allow_private_through = m.get("ordinary_private_through_routing", False)
+        return context
 
     def _path(self, node, forest):
         if node in self.reference:
@@ -569,6 +621,9 @@ class LocalAccessContext:
         frame["sensitive_interior_road"] = frame.physical_edge_id.map(
             info.sensitive_interior_road
         ).astype(bool)
+        if "native_area_access_prohibited" in info:
+            frame["native_area_access_prohibited"] = frame.physical_edge_id.map(
+                info.native_area_access_prohibited).astype(bool)
         for column in ["source_oneway", "direction_status", "direction_resolved"]:
             if column in info:
                 frame[column] = frame.physical_edge_id.map(info[column])
@@ -658,7 +713,9 @@ class LocalAccessContext:
             out_roots.append(cout[1])
             in_lengths.append(cin[0])
             out_lengths.append(cout[0])
-            if row.sensitive_interior_road:
+            if getattr(row, "native_area_access_prohibited", False):
+                reason = "local_road_native_area_access_prohibited"
+            elif row.sensitive_interior_road:
                 reason = "local_road_within_excluded_facility"
             elif not getattr(row, "direction_resolved", True):
                 reason = "local_road_direction_unresolved"

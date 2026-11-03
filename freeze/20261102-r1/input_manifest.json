@@ -1,0 +1,1242 @@
+{
+  "schema": "evrptw_stage1_server_input_manifest_v1",
+  "freeze_id": "stage1-20261102-r1",
+  "generated_utc": "2026-11-03T05:18:17.490635+00:00",
+  "data_root": "inputs/stage1_20261102",
+  "target_path_base": "data_root",
+  "server_config": "freeze/20261102-r1/stage1.server.json",
+  "server_config_sha256": "2bb60a85f2029a09a4f15eba28406259ed5b9e56d5b1fd9b6b930e2c06ed97c6",
+  "component_inventory": {
+    "repo_path": "configs/phase1_sources.template.json",
+    "sha256": "d206978b7b22324546d258e6981d5cdabe620d2c75c211e69f36026f9b860fb2",
+    "bytes": 1390427,
+    "transfer_group": "code_bundle"
+  },
+  "source_project_sha256": "b542135851b5e151742d164e9e1df7c0b5b6076df46cf3937b3311851a54f41e",
+  "source_snapshots": {
+    "microsoft_index": "2026-08-13",
+    "osm": "2026-10-25",
+    "nsi_archive": "2026-10-26"
+  },
+  "road_snapshots": {
+    "new-york": {
+      "pbf_sha256": "725e0965408c558338e601499e42cd7a58a8b631051f78919527bce383e85d09",
+      "pbf_replication_timestamp_utc": "2026-10-25T21:21:21Z",
+      "access_node_tag_contract": "complete_way_restriction_barrier_delivery_lock_nodes_v3"
+    },
+    "los-angeles": {
+      "pbf_sha256": "a74410b3d65658e74b9fab49d72496619ee0312532d7fa1906c53c59b17e45d6",
+      "pbf_replication_timestamp_utc": "2026-10-25T21:21:21Z",
+      "access_node_tag_contract": "complete_way_restriction_barrier_delivery_lock_nodes_v3"
+    },
+    "chicago": {
+      "pbf_sha256": "6aa348384317c605c9247fcc555e66bbfd2e1f17e8b26313a2905e81a7abb135",
+      "pbf_replication_timestamp_utc": "2026-10-25T21:21:21Z",
+      "access_node_tag_contract": "complete_way_restriction_barrier_delivery_lock_nodes_v3"
+    },
+    "houston": {
+      "pbf_sha256": "d92237e454c09ce22b4e6403a3d97201eabcc776ed1a6c5e6a922ce65430f478",
+      "pbf_replication_timestamp_utc": "2026-10-25T21:21:21Z",
+      "access_node_tag_contract": "complete_way_restriction_barrier_delivery_lock_nodes_v3"
+    },
+    "phoenix": {
+      "pbf_sha256": "dcff11677118fff8101f8ed7d02bc5ffd0a5a799bc23e26da1cebf3268678ac9",
+      "pbf_replication_timestamp_utc": "2026-10-25T21:21:21Z",
+      "access_node_tag_contract": "complete_way_restriction_barrier_delivery_lock_nodes_v3"
+    },
+    "philadelphia": {
+      "pbf_sha256": "3aa7420f9dcce032d2941b2bcec471e9c9bd90a611ab7a24d249410f3a473305",
+      "pbf_replication_timestamp_utc": "2026-10-25T21:21:21Z",
+      "access_node_tag_contract": "complete_way_restriction_barrier_delivery_lock_nodes_v3"
+    },
+    "san-antonio": {
+      "pbf_sha256": "d92237e454c09ce22b4e6403a3d97201eabcc776ed1a6c5e6a922ce65430f478",
+      "pbf_replication_timestamp_utc": "2026-10-25T21:21:21Z",
+      "access_node_tag_contract": "complete_way_restriction_barrier_delivery_lock_nodes_v3"
+    },
+    "san-diego": {
+      "pbf_sha256": "a74410b3d65658e74b9fab49d72496619ee0312532d7fa1906c53c59b17e45d6",
+      "pbf_replication_timestamp_utc": "2026-10-25T21:21:21Z",
+      "access_node_tag_contract": "complete_way_restriction_barrier_delivery_lock_nodes_v3"
+    },
+    "dallas": {
+      "pbf_sha256": "d92237e454c09ce22b4e6403a3d97201eabcc776ed1a6c5e6a922ce65430f478",
+      "pbf_replication_timestamp_utc": "2026-10-25T21:21:21Z",
+      "access_node_tag_contract": "complete_way_restriction_barrier_delivery_lock_nodes_v3"
+    },
+    "jacksonville": {
+      "pbf_sha256": "12e675a181e3c0d2cc34d3c3cb5fb115a04b69ad9e5d212bee1114cb22d1bb46",
+      "pbf_replication_timestamp_utc": "2026-10-25T21:21:21Z",
+      "access_node_tag_contract": "complete_way_restriction_barrier_delivery_lock_nodes_v3"
+    },
+    "fort-worth": {
+      "pbf_sha256": "d92237e454c09ce22b4e6403a3d97201eabcc776ed1a6c5e6a922ce65430f478",
+      "pbf_replication_timestamp_utc": "2026-10-25T21:21:21Z",
+      "access_node_tag_contract": "complete_way_restriction_barrier_delivery_lock_nodes_v3"
+    }
+  },
+  "files": [
+    {
+      "target_path": "archive/boundaries/chicago/admin_boundary.geojson",
+      "sha256": "86c67412df7057f854eee7cfc9cef35bc62fa16916aa6092b559e298683fffaa",
+      "bytes": 173054,
+      "category": "boundary",
+      "roles": [
+        "chicago.admin_boundary"
+      ],
+      "city": "chicago"
+    },
+    {
+      "target_path": "archive/boundaries/chicago/land_boundary.geojson",
+      "sha256": "4d4dd1d98e56f250edb31c21927b9679cde9da1ff9859b2775c0019bd0b580db",
+      "bytes": 374726,
+      "category": "boundary",
+      "roles": [
+        "chicago.service_boundary"
+      ],
+      "city": "chicago"
+    },
+    {
+      "target_path": "archive/boundaries/dallas/admin_boundary.geojson",
+      "sha256": "af01a35ab38d8730ef5c43b951084a9c2c008c5154a710dd1155fb7b1c834cf3",
+      "bytes": 431920,
+      "category": "boundary",
+      "roles": [
+        "dallas.admin_boundary"
+      ],
+      "city": "dallas"
+    },
+    {
+      "target_path": "archive/boundaries/dallas/land_boundary.geojson",
+      "sha256": "bb214372f55909942616762b0240e0a3286ee32c0770f9e9fdde4cd5188f90ac",
+      "bytes": 952616,
+      "category": "boundary",
+      "roles": [
+        "dallas.service_boundary"
+      ],
+      "city": "dallas"
+    },
+    {
+      "target_path": "archive/boundaries/fort-worth/admin_boundary.geojson",
+      "sha256": "8435d71fa88be72916bf884729da553629d7586e934ee11c9ffc05f9fb7c53da",
+      "bytes": 320979,
+      "category": "boundary",
+      "roles": [
+        "fort-worth.admin_boundary"
+      ],
+      "city": "fort-worth"
+    },
+    {
+      "target_path": "archive/boundaries/fort-worth/land_boundary.geojson",
+      "sha256": "70302f022420046995e4c99a3b1959663fa25c3610972fda56b0ba42044fc2ad",
+      "bytes": 788897,
+      "category": "boundary",
+      "roles": [
+        "fort-worth.service_boundary"
+      ],
+      "city": "fort-worth"
+    },
+    {
+      "target_path": "archive/boundaries/houston/admin_boundary.geojson",
+      "sha256": "95f0e2613f3eaf56adf0d4687825002457c7f58e61e1abd8aa2dbcd455187c0e",
+      "bytes": 1898239,
+      "category": "boundary",
+      "roles": [
+        "houston.admin_boundary"
+      ],
+      "city": "houston"
+    },
+    {
+      "target_path": "archive/boundaries/houston/land_boundary.geojson",
+      "sha256": "799bdab1545d881940375e3be1e768f455585f6a3479e9569cc1b1eba1954ab7",
+      "bytes": 3344353,
+      "category": "boundary",
+      "roles": [
+        "houston.service_boundary"
+      ],
+      "city": "houston"
+    },
+    {
+      "target_path": "archive/boundaries/jacksonville/admin_boundary.geojson",
+      "sha256": "50f74f1a36c499210fd50a4b324980a9bb410b5191100d712e8aa54ddd37d116",
+      "bytes": 59940,
+      "category": "boundary",
+      "roles": [
+        "jacksonville.admin_boundary"
+      ],
+      "city": "jacksonville"
+    },
+    {
+      "target_path": "archive/boundaries/jacksonville/land_boundary.geojson",
+      "sha256": "c2326b96a9939b6b950f00f6521ef347ab5332638f46f6065455fbebef288cfe",
+      "bytes": 2124991,
+      "category": "boundary",
+      "roles": [
+        "jacksonville.service_boundary"
+      ],
+      "city": "jacksonville"
+    },
+    {
+      "target_path": "archive/boundaries/los-angeles/admin_boundary.geojson",
+      "sha256": "d1ead0377f3ad2f7da0b57ecba00e3330c2f50f4f77d242e3e4254251778c061",
+      "bytes": 231486,
+      "category": "boundary",
+      "roles": [
+        "los-angeles.admin_boundary"
+      ],
+      "city": "los-angeles"
+    },
+    {
+      "target_path": "archive/boundaries/los-angeles/land_boundary.geojson",
+      "sha256": "f4987a537e95bfbc71df5fe8fcc124209f55fce2034da5039f8d55a84c8a51bd",
+      "bytes": 525743,
+      "category": "boundary",
+      "roles": [
+        "los-angeles.service_boundary"
+      ],
+      "city": "los-angeles"
+    },
+    {
+      "target_path": "archive/boundaries/new-york/admin_boundary.geojson",
+      "sha256": "4025b0dff47654bbe811a40ff998341c51206d89503b9a1c9e766ae3bea0cf86",
+      "bytes": 44492,
+      "category": "boundary",
+      "roles": [
+        "new-york.admin_boundary"
+      ],
+      "city": "new-york"
+    },
+    {
+      "target_path": "archive/boundaries/new-york/land_boundary.geojson",
+      "sha256": "3d7376588d85a1a86c4152ada0f893a2598128abb22b2b5d4a9f25ce9d823c70",
+      "bytes": 715957,
+      "category": "boundary",
+      "roles": [
+        "new-york.service_boundary"
+      ],
+      "city": "new-york"
+    },
+    {
+      "target_path": "archive/boundaries/philadelphia/admin_boundary.geojson",
+      "sha256": "3bb02eba6ab58844dcbfcedfb7100e0c4a4bae8f90e9ea444e50b7626be57fe6",
+      "bytes": 90400,
+      "category": "boundary",
+      "roles": [
+        "philadelphia.admin_boundary"
+      ],
+      "city": "philadelphia"
+    },
+    {
+      "target_path": "archive/boundaries/philadelphia/land_boundary.geojson",
+      "sha256": "52069420fa248fec4f471770db9276e5cf6da77db366d3ff9d718e5646c23a94",
+      "bytes": 1092962,
+      "category": "boundary",
+      "roles": [
+        "philadelphia.service_boundary"
+      ],
+      "city": "philadelphia"
+    },
+    {
+      "target_path": "archive/boundaries/phoenix/admin_boundary.geojson",
+      "sha256": "8551b2ef8366c3009a25fac736f6c420ce2f7de8cc7b1e3ad31d7c71c54582dd",
+      "bytes": 184395,
+      "category": "boundary",
+      "roles": [
+        "phoenix.admin_boundary"
+      ],
+      "city": "phoenix"
+    },
+    {
+      "target_path": "archive/boundaries/phoenix/land_boundary.geojson",
+      "sha256": "9af771cf3944e7a3c0eb826796f7f9af665ed6967ba88092c22a886086473e6b",
+      "bytes": 323849,
+      "category": "boundary",
+      "roles": [
+        "phoenix.service_boundary"
+      ],
+      "city": "phoenix"
+    },
+    {
+      "target_path": "archive/boundaries/san-antonio/admin_boundary.geojson",
+      "sha256": "55a690f4ad9ba541a19315bc1bd46e820f7058493b0f51d3f90995cb7886eda2",
+      "bytes": 395291,
+      "category": "boundary",
+      "roles": [
+        "san-antonio.admin_boundary"
+      ],
+      "city": "san-antonio"
+    },
+    {
+      "target_path": "archive/boundaries/san-antonio/land_boundary.geojson",
+      "sha256": "415509f301f5cd7049fb27d076f76217033eaec05efea30a7afc626ffc75aac1",
+      "bytes": 1117035,
+      "category": "boundary",
+      "roles": [
+        "san-antonio.service_boundary"
+      ],
+      "city": "san-antonio"
+    },
+    {
+      "target_path": "archive/boundaries/san-diego/admin_boundary.geojson",
+      "sha256": "3b7cdb529f9a3db42eb39c114740514218da5706d90f0ddbebeadae65ee6c1a2",
+      "bytes": 340534,
+      "category": "boundary",
+      "roles": [
+        "san-diego.admin_boundary"
+      ],
+      "city": "san-diego"
+    },
+    {
+      "target_path": "archive/boundaries/san-diego/land_boundary.geojson",
+      "sha256": "e54f5ad49ad658ae63ccdf49a024103e00fc4d0a49119e8021764b2403859370",
+      "bytes": 457847,
+      "category": "boundary",
+      "roles": [
+        "san-diego.service_boundary"
+      ],
+      "city": "san-diego"
+    },
+    {
+      "target_path": "archive/sources/afdc/afdc_address_only_census_20261026.csv",
+      "sha256": "8b80d3a865a95582382487f655b90a4dcce20ab8a68a1ad0c1b9a66e1543e181",
+      "bytes": 388886,
+      "category": "charging",
+      "roles": [
+        "charging.census"
+      ]
+    },
+    {
+      "target_path": "archive/sources/afdc/afdc_address_only_census_20261026.manifest.json",
+      "sha256": "59150d3d28ce9eaffeb10f8d80d11ff05d2619b69228e923ce998d95c956ae8f",
+      "bytes": 2623,
+      "category": "charging",
+      "roles": [
+        "charging.census.provenance"
+      ]
+    },
+    {
+      "target_path": "archive/sources/afdc/afdc_us_public_available_charging_units.csv",
+      "sha256": "d894efdee93b811f64db4c84acf4f1ad0d8c9709dbdd1964ba51049f3191957b",
+      "bytes": 100527722,
+      "category": "charging",
+      "roles": [
+        "charging.units"
+      ]
+    },
+    {
+      "target_path": "archive/sources/afdc/afdc_us_public_available_charging_units.manifest.json",
+      "sha256": "fb225f52cfefb49354db3b2083a53c3e2387e507097b7cd6f85e68f4df937aff",
+      "bytes": 926,
+      "category": "charging",
+      "roles": [
+        "charging.units.provenance"
+      ]
+    },
+    {
+      "target_path": "archive/sources/afdc/afdc_us_public_available_electric_20261026.csv",
+      "sha256": "8e6c9f357d4ebada43206f19004b03fa156462e7f2d5a7669f59fa0cfed82a84",
+      "bytes": 28790973,
+      "category": "charging",
+      "roles": [
+        "charging.station"
+      ]
+    },
+    {
+      "target_path": "archive/sources/afdc/afdc_us_public_available_electric_20261026.manifest.json",
+      "sha256": "6947a361398e3cb071cc1d8a33d222ae4f0e15fb1fb382ed2daef12e34d5812f",
+      "bytes": 564,
+      "category": "charging",
+      "roles": [
+        "charging.station.provenance"
+      ]
+    },
+    {
+      "target_path": "archive/sources/depot/chicago/extraction.json",
+      "sha256": "c65f13830eeefa7ac74b0414bee283625b5734c1fbfad90eaa915392459d3c5b",
+      "bytes": 1163,
+      "category": "depot",
+      "roles": [
+        "chicago.depot_extraction"
+      ],
+      "city": "chicago"
+    },
+    {
+      "target_path": "archive/sources/depot/chicago/raw_osm_depot_evidence.parquet",
+      "sha256": "effff0780ddd33ebb1f0f60f01c1cdb8875bae8e028a99ee536daa55a56f2ef7",
+      "bytes": 721267,
+      "category": "depot",
+      "roles": [
+        "chicago.depot_raw"
+      ],
+      "city": "chicago"
+    },
+    {
+      "target_path": "archive/sources/depot/dallas/extraction.json",
+      "sha256": "1054e5ba81245d65f0b9d72e63c5e2ae2e19e72bd2c0f4b09c7ab5d8b4d15878",
+      "bytes": 1151,
+      "category": "depot",
+      "roles": [
+        "dallas.depot_extraction"
+      ],
+      "city": "dallas"
+    },
+    {
+      "target_path": "archive/sources/depot/dallas/raw_osm_depot_evidence.parquet",
+      "sha256": "26a264f227ee86701b6bfa70353fb5b9a0e37c8efffbfe2752eb081956bca415",
+      "bytes": 749825,
+      "category": "depot",
+      "roles": [
+        "dallas.depot_raw"
+      ],
+      "city": "dallas"
+    },
+    {
+      "target_path": "archive/sources/depot/fort-worth/extraction.json",
+      "sha256": "f2e651cfce2427b6f70f59e673e519283da8cdb2c53424716bf3c7ddf4efd408",
+      "bytes": 1159,
+      "category": "depot",
+      "roles": [
+        "fort-worth.depot_extraction"
+      ],
+      "city": "fort-worth"
+    },
+    {
+      "target_path": "archive/sources/depot/fort-worth/raw_osm_depot_evidence.parquet",
+      "sha256": "e75d4feff178d9d9e1e55076eaa753f05260f33a779fd1dc92ef942561e09105",
+      "bytes": 431037,
+      "category": "depot",
+      "roles": [
+        "fort-worth.depot_raw"
+      ],
+      "city": "fort-worth"
+    },
+    {
+      "target_path": "archive/sources/depot/houston/extraction.json",
+      "sha256": "7a1658cf4dc475f8a52ac7ed9db3476dbc2f091546ffd5a2e402474697954cd9",
+      "bytes": 1154,
+      "category": "depot",
+      "roles": [
+        "houston.depot_extraction"
+      ],
+      "city": "houston"
+    },
+    {
+      "target_path": "archive/sources/depot/houston/raw_osm_depot_evidence.parquet",
+      "sha256": "e9f7eda9aa463e86bb55cca3e9d34e077d46dad78363fd9aefc3ac409e45bbc2",
+      "bytes": 365364,
+      "category": "depot",
+      "roles": [
+        "houston.depot_raw"
+      ],
+      "city": "houston"
+    },
+    {
+      "target_path": "archive/sources/depot/jacksonville/extraction.json",
+      "sha256": "a15cb5375260484614ef19af77528888fb811af22b91591ac68ce1be4772c60f",
+      "bytes": 1169,
+      "category": "depot",
+      "roles": [
+        "jacksonville.depot_extraction"
+      ],
+      "city": "jacksonville"
+    },
+    {
+      "target_path": "archive/sources/depot/jacksonville/raw_osm_depot_evidence.parquet",
+      "sha256": "3a8ebf66e534b0e2a5607b2461218d04bbcfa1cd3145b42162b2add948342673",
+      "bytes": 507176,
+      "category": "depot",
+      "roles": [
+        "jacksonville.depot_raw"
+      ],
+      "city": "jacksonville"
+    },
+    {
+      "target_path": "archive/sources/depot/los-angeles/extraction.json",
+      "sha256": "c135a893164da2f57d31ce8fc22d291da1892e1c934de19a61667f6b3fcb92d1",
+      "bytes": 1174,
+      "category": "depot",
+      "roles": [
+        "los-angeles.depot_extraction"
+      ],
+      "city": "los-angeles"
+    },
+    {
+      "target_path": "archive/sources/depot/los-angeles/raw_osm_depot_evidence.parquet",
+      "sha256": "7938c6583994b3a6115dcbe9bc5be8d9c0d95ae5e6998118dbb9bee2e91cbcad",
+      "bytes": 3539746,
+      "category": "depot",
+      "roles": [
+        "los-angeles.depot_raw"
+      ],
+      "city": "los-angeles"
+    },
+    {
+      "target_path": "archive/sources/depot/new-york/extraction.json",
+      "sha256": "44a9329f5127a6f42dc8c557d396fef803dc787340ffbc489e49867d55b0c89c",
+      "bytes": 1158,
+      "category": "depot",
+      "roles": [
+        "new-york.depot_extraction"
+      ],
+      "city": "new-york"
+    },
+    {
+      "target_path": "archive/sources/depot/new-york/raw_osm_depot_evidence.parquet",
+      "sha256": "684efbff30566630588b1646b18b09e035d182f9ea51a42c5bdd5a7e2e65b63c",
+      "bytes": 445735,
+      "category": "depot",
+      "roles": [
+        "new-york.depot_raw"
+      ],
+      "city": "new-york"
+    },
+    {
+      "target_path": "archive/sources/depot/philadelphia/extraction.json",
+      "sha256": "f6af9b4b3bc274f179f50f49fe4305dda58fa1621b5caaad4a2c08387a211e4d",
+      "bytes": 1175,
+      "category": "depot",
+      "roles": [
+        "philadelphia.depot_extraction"
+      ],
+      "city": "philadelphia"
+    },
+    {
+      "target_path": "archive/sources/depot/philadelphia/raw_osm_depot_evidence.parquet",
+      "sha256": "9d52241fc2d71909aaca8a63869122c567fb477947e88c884792ee2618ea2cf5",
+      "bytes": 169752,
+      "category": "depot",
+      "roles": [
+        "philadelphia.depot_raw"
+      ],
+      "city": "philadelphia"
+    },
+    {
+      "target_path": "archive/sources/depot/phoenix/extraction.json",
+      "sha256": "45e9ef3eb23286516a8568720e167f75616f5a9377025804a69b9edb4ad133ad",
+      "bytes": 1160,
+      "category": "depot",
+      "roles": [
+        "phoenix.depot_extraction"
+      ],
+      "city": "phoenix"
+    },
+    {
+      "target_path": "archive/sources/depot/phoenix/raw_osm_depot_evidence.parquet",
+      "sha256": "f7aa846e8f65d2dd369e0225c8c12395976b54451600ec96bc695795aa4706cf",
+      "bytes": 439935,
+      "category": "depot",
+      "roles": [
+        "phoenix.depot_raw"
+      ],
+      "city": "phoenix"
+    },
+    {
+      "target_path": "archive/sources/depot/san-antonio/extraction.json",
+      "sha256": "2294cd41dbb235883231848c5565320a0fca804ebacf6a6a0ee0f90a370ae4b9",
+      "bytes": 1159,
+      "category": "depot",
+      "roles": [
+        "san-antonio.depot_extraction"
+      ],
+      "city": "san-antonio"
+    },
+    {
+      "target_path": "archive/sources/depot/san-antonio/raw_osm_depot_evidence.parquet",
+      "sha256": "85182ebe6f3c0f65c5e8fdeb7139d014fab497eeb64b9897e619218fb8cec7d0",
+      "bytes": 175833,
+      "category": "depot",
+      "roles": [
+        "san-antonio.depot_raw"
+      ],
+      "city": "san-antonio"
+    },
+    {
+      "target_path": "archive/sources/depot/san-diego/extraction.json",
+      "sha256": "72bb8e7c2142434f89f22bacdbb6dc85c8b26e46cf93724f93f4319b5e03ee75",
+      "bytes": 1168,
+      "category": "depot",
+      "roles": [
+        "san-diego.depot_extraction"
+      ],
+      "city": "san-diego"
+    },
+    {
+      "target_path": "archive/sources/depot/san-diego/raw_osm_depot_evidence.parquet",
+      "sha256": "3b68847e38b460c951c7acea7c72c381822db828f9dabf01539895d1bb1f21aa",
+      "bytes": 533553,
+      "category": "depot",
+      "roles": [
+        "san-diego.depot_raw"
+      ],
+      "city": "san-diego"
+    },
+    {
+      "target_path": "customer/chicago/microsoft_footprints.parquet",
+      "sha256": "ec8d856bf954799ccfa24dd0a9ebd1f142efa44e15c2f54c52ad4074e9f4f5ec",
+      "bytes": 64734906,
+      "category": "customer",
+      "roles": [
+        "chicago.microsoft"
+      ],
+      "city": "chicago"
+    },
+    {
+      "target_path": "customer/chicago/nsi_native.parquet",
+      "sha256": "5fb6a4c474193d8051d22323ebc0e793779dc06b1b30c952e1f497420cc045c4",
+      "bytes": 37526741,
+      "category": "customer",
+      "roles": [
+        "chicago.nsi"
+      ],
+      "city": "chicago"
+    },
+    {
+      "target_path": "customer/chicago/osm_buildings.parquet",
+      "sha256": "5d5874772076ef443b936aba3a661138f1a230d8213fd95b503b05d33f2dd422",
+      "bytes": 100594319,
+      "category": "customer",
+      "roles": [
+        "chicago.osm"
+      ],
+      "city": "chicago"
+    },
+    {
+      "target_path": "customer/dallas/microsoft_footprints.parquet",
+      "sha256": "69da1fde9b5945f6aec70a626b6d8ce2caa692436b5667436425689bd60f1917",
+      "bytes": 38268494,
+      "category": "customer",
+      "roles": [
+        "dallas.microsoft"
+      ],
+      "city": "dallas"
+    },
+    {
+      "target_path": "customer/dallas/nsi_native.parquet",
+      "sha256": "83f7e931358d909df8e3cc2790580a4f7e426c1d92f453f429524f6225270036",
+      "bytes": 23490865,
+      "category": "customer",
+      "roles": [
+        "dallas.nsi"
+      ],
+      "city": "dallas"
+    },
+    {
+      "target_path": "customer/dallas/osm_buildings.parquet",
+      "sha256": "12ee9c6e25768075ab47630a36a5e80a120fa649f7e2992abf426482cfa3131e",
+      "bytes": 51607540,
+      "category": "customer",
+      "roles": [
+        "dallas.osm"
+      ],
+      "city": "dallas"
+    },
+    {
+      "target_path": "customer/fort-worth/microsoft_footprints.parquet",
+      "sha256": "16f075d2c0dbea1f3542670b99c581fab4dab2e8fa146e261d49753d7774106f",
+      "bytes": 34578610,
+      "category": "customer",
+      "roles": [
+        "fort-worth.microsoft"
+      ],
+      "city": "fort-worth"
+    },
+    {
+      "target_path": "customer/fort-worth/nsi_native.parquet",
+      "sha256": "20b66b2823a1fa1b5ab34260793e81a76949867f21ce94d60141f02e4be5574d",
+      "bytes": 21399754,
+      "category": "customer",
+      "roles": [
+        "fort-worth.nsi"
+      ],
+      "city": "fort-worth"
+    },
+    {
+      "target_path": "customer/fort-worth/osm_buildings.parquet",
+      "sha256": "0d41f6790df1ab77aac8867dd4ba1bfe9245a02d0243693d1538cb94d91e3fcf",
+      "bytes": 45604128,
+      "category": "customer",
+      "roles": [
+        "fort-worth.osm"
+      ],
+      "city": "fort-worth"
+    },
+    {
+      "target_path": "customer/houston/microsoft_footprints.parquet",
+      "sha256": "e2e3bd96445c86ff3216dbc1f7d21526ab7109eb3e3305f895a219caf4c88500",
+      "bytes": 70553300,
+      "category": "customer",
+      "roles": [
+        "houston.microsoft"
+      ],
+      "city": "houston"
+    },
+    {
+      "target_path": "customer/houston/nsi_native.parquet",
+      "sha256": "06f7cdece434ecb623d015b817e5979df856a4a19995cc850d8860b3626c2ee0",
+      "bytes": 44761767,
+      "category": "customer",
+      "roles": [
+        "houston.nsi"
+      ],
+      "city": "houston"
+    },
+    {
+      "target_path": "customer/houston/osm_buildings.parquet",
+      "sha256": "7c71a661a0fb91f446f5b459d8e4308313e2f99fe1592aded3db6051b6f62ecf",
+      "bytes": 47670759,
+      "category": "customer",
+      "roles": [
+        "houston.osm"
+      ],
+      "city": "houston"
+    },
+    {
+      "target_path": "customer/jacksonville/microsoft_footprints.parquet",
+      "sha256": "168a138f743ef8beda27ce816394c7b4a65eecaa0890ad29f74fd2df645ceedc",
+      "bytes": 39090045,
+      "category": "customer",
+      "roles": [
+        "jacksonville.microsoft"
+      ],
+      "city": "jacksonville"
+    },
+    {
+      "target_path": "customer/jacksonville/nsi_native.parquet",
+      "sha256": "38f85c8f21d369735eb17adcb6aab890afe968658225cbc18dd8fa62ea52f696",
+      "bytes": 25533250,
+      "category": "customer",
+      "roles": [
+        "jacksonville.nsi"
+      ],
+      "city": "jacksonville"
+    },
+    {
+      "target_path": "customer/jacksonville/osm_buildings.parquet",
+      "sha256": "ae0cc9c5a7f0e6bed15a90380728bea48c2d92a435bc19a9b8687ca8de4bb1fe",
+      "bytes": 23059560,
+      "category": "customer",
+      "roles": [
+        "jacksonville.osm"
+      ],
+      "city": "jacksonville"
+    },
+    {
+      "target_path": "customer/los-angeles/microsoft_footprints.parquet",
+      "sha256": "25302ff3ffe2c3b228703f3a2acb726c0bfd1fdcfc9d166fdb0c52a1938e45e4",
+      "bytes": 96135843,
+      "category": "customer",
+      "roles": [
+        "los-angeles.microsoft"
+      ],
+      "city": "los-angeles"
+    },
+    {
+      "target_path": "customer/los-angeles/nsi_native.parquet",
+      "sha256": "8b9bb3a27b7eae89c1522e751773e72119046d664741e99d0c131755b9159b49",
+      "bytes": 54223030,
+      "category": "customer",
+      "roles": [
+        "los-angeles.nsi"
+      ],
+      "city": "los-angeles"
+    },
+    {
+      "target_path": "customer/los-angeles/osm_buildings.parquet",
+      "sha256": "9c5639d3e74c355615b6072feace96d58df3df23d859e0aea970a45848c2eb77",
+      "bytes": 213553326,
+      "category": "customer",
+      "roles": [
+        "los-angeles.osm"
+      ],
+      "city": "los-angeles"
+    },
+    {
+      "target_path": "customer/new-york/microsoft_footprints.parquet",
+      "sha256": "09434358e0df5a8865da9246a912b62a8cbb05c1702ba50e01b637b3110b9efb",
+      "bytes": 57679505,
+      "category": "customer",
+      "roles": [
+        "new-york.microsoft"
+      ],
+      "city": "new-york"
+    },
+    {
+      "target_path": "customer/new-york/nsi_native.parquet",
+      "sha256": "28809739fb254fb1254d95e508b1da118a068d48b05305387494d22a2b0274f7",
+      "bytes": 56121750,
+      "category": "customer",
+      "roles": [
+        "new-york.nsi"
+      ],
+      "city": "new-york"
+    },
+    {
+      "target_path": "customer/new-york/osm_buildings.parquet",
+      "sha256": "46e64eaf8ca09c7b2e34db6f8718c5b46ddb10e3a0029d0a190fdb38231f2321",
+      "bytes": 127947963,
+      "category": "customer",
+      "roles": [
+        "new-york.osm"
+      ],
+      "city": "new-york"
+    },
+    {
+      "target_path": "customer/philadelphia/microsoft_footprints.parquet",
+      "sha256": "cde5836649bf2e378892942a867e2f162e5f172b96f1fa5b54e3962b92ebd7eb",
+      "bytes": 20833579,
+      "category": "customer",
+      "roles": [
+        "philadelphia.microsoft"
+      ],
+      "city": "philadelphia"
+    },
+    {
+      "target_path": "customer/philadelphia/nsi_native.parquet",
+      "sha256": "5b683816768088a34438c1b91228c236fd18ac9530ca6848d6848563b90dec53",
+      "bytes": 30274927,
+      "category": "customer",
+      "roles": [
+        "philadelphia.nsi"
+      ],
+      "city": "philadelphia"
+    },
+    {
+      "target_path": "customer/philadelphia/osm_buildings.parquet",
+      "sha256": "f89717701e78258960689e05159517197f1f3d0df14da030c3e9787a0faab2f3",
+      "bytes": 74221731,
+      "category": "customer",
+      "roles": [
+        "philadelphia.osm"
+      ],
+      "city": "philadelphia"
+    },
+    {
+      "target_path": "customer/phoenix/microsoft_footprints.parquet",
+      "sha256": "a037613d1a4312785c8bf50f2dc058dea3ca78d1b732aafdf9d0b5b1c22c6c78",
+      "bytes": 61592761,
+      "category": "customer",
+      "roles": [
+        "phoenix.microsoft"
+      ],
+      "city": "phoenix"
+    },
+    {
+      "target_path": "customer/phoenix/nsi_native.parquet",
+      "sha256": "fedbcbd9dc3412113014bcaf1dc316175d34c847fba70be4a558d3e633e859fc",
+      "bytes": 37527565,
+      "category": "customer",
+      "roles": [
+        "phoenix.nsi"
+      ],
+      "city": "phoenix"
+    },
+    {
+      "target_path": "customer/phoenix/osm_buildings.parquet",
+      "sha256": "9269f933df3fd3fc84abaf24d903fa34e7ec532195ac7703e217d826cd67e991",
+      "bytes": 56289121,
+      "category": "customer",
+      "roles": [
+        "phoenix.osm"
+      ],
+      "city": "phoenix"
+    },
+    {
+      "target_path": "customer/san-antonio/microsoft_footprints.parquet",
+      "sha256": "c72756bb82ffca4bef35e9cf6f3fe9f1f46b6a5c561b071ecf2227023747865a",
+      "bytes": 54631213,
+      "category": "customer",
+      "roles": [
+        "san-antonio.microsoft"
+      ],
+      "city": "san-antonio"
+    },
+    {
+      "target_path": "customer/san-antonio/nsi_native.parquet",
+      "sha256": "9d9e11db1a20fe15018557a8933c51f70ac542447b982899f4a2b95f8e6978d1",
+      "bytes": 33046890,
+      "category": "customer",
+      "roles": [
+        "san-antonio.nsi"
+      ],
+      "city": "san-antonio"
+    },
+    {
+      "target_path": "customer/san-antonio/osm_buildings.parquet",
+      "sha256": "35023fda40db49d04c34e46c6c74ff307f3af91c4733ea4ff71ae6a2dd6fde6a",
+      "bytes": 25974362,
+      "category": "customer",
+      "roles": [
+        "san-antonio.osm"
+      ],
+      "city": "san-antonio"
+    },
+    {
+      "target_path": "customer/san-diego/microsoft_footprints.parquet",
+      "sha256": "daeb3cbc2dc294f9b7c998564f5305e9d3c7345804546adbfb94aa1f93fd8f06",
+      "bytes": 40988870,
+      "category": "customer",
+      "roles": [
+        "san-diego.microsoft"
+      ],
+      "city": "san-diego"
+    },
+    {
+      "target_path": "customer/san-diego/nsi_native.parquet",
+      "sha256": "a2b3a293529f5e96fc7b72393a189ef4aa658faff39fb7156da79e01776328e6",
+      "bytes": 22847481,
+      "category": "customer",
+      "roles": [
+        "san-diego.nsi"
+      ],
+      "city": "san-diego"
+    },
+    {
+      "target_path": "customer/san-diego/osm_buildings.parquet",
+      "sha256": "19e448777fd2b7cf1d543f74cefe6fb5a997e906a23eb5061755c614c1cceb1f",
+      "bytes": 42234533,
+      "category": "customer",
+      "roles": [
+        "san-diego.osm"
+      ],
+      "city": "san-diego"
+    },
+    {
+      "target_path": "roads/chicago/extraction.json",
+      "sha256": "031a30f8643b2647f6f3066a1ac5c927123ee8a3393dcccef340c3217e21704d",
+      "bytes": 1217,
+      "category": "roads",
+      "roles": [
+        "chicago.road_extraction"
+      ],
+      "city": "chicago"
+    },
+    {
+      "target_path": "roads/chicago/osm_access_nodes.parquet",
+      "sha256": "f9d2264862a2ee6db042aab61b966ba2c0336cc98ad892e8487fe5fa3845b75e",
+      "bytes": 1954524,
+      "category": "roads",
+      "roles": [
+        "chicago.roads.osm_access_nodes.parquet"
+      ],
+      "city": "chicago"
+    },
+    {
+      "target_path": "roads/chicago/osm_ways.parquet",
+      "sha256": "77b84fd164a3b49e2a09ce1f9110cacc824641d4c7d738db4002d0bf3d7ccaf3",
+      "bytes": 89883661,
+      "category": "roads",
+      "roles": [
+        "chicago.roads.osm_ways.parquet"
+      ],
+      "city": "chicago"
+    },
+    {
+      "target_path": "roads/dallas/extraction.json",
+      "sha256": "b0016c568b2cfe60a3dcc89b7bbd879ade3fa64faf4211cae0365ee505e0cbc0",
+      "bytes": 1208,
+      "category": "roads",
+      "roles": [
+        "dallas.road_extraction"
+      ],
+      "city": "dallas"
+    },
+    {
+      "target_path": "roads/dallas/osm_access_nodes.parquet",
+      "sha256": "0589a4d91fd9e6eb778ac1b607402b7ee92f7a6c582f49c8bd15abcec71e2aa3",
+      "bytes": 1852843,
+      "category": "roads",
+      "roles": [
+        "dallas.roads.osm_access_nodes.parquet"
+      ],
+      "city": "dallas"
+    },
+    {
+      "target_path": "roads/dallas/osm_ways.parquet",
+      "sha256": "0a9e390f92ab9e8920863b5936afe94d04ddc9e36b3960514a1a8a7a6c10f0ed",
+      "bytes": 102393006,
+      "category": "roads",
+      "roles": [
+        "dallas.roads.osm_ways.parquet"
+      ],
+      "city": "dallas"
+    },
+    {
+      "target_path": "roads/fort-worth/extraction.json",
+      "sha256": "49f114bd35909e6b38fa359a6b88fce57187d2fca79c071109e4d2f46d542c79",
+      "bytes": 1212,
+      "category": "roads",
+      "roles": [
+        "fort-worth.road_extraction"
+      ],
+      "city": "fort-worth"
+    },
+    {
+      "target_path": "roads/fort-worth/osm_access_nodes.parquet",
+      "sha256": "af964bcbb75b38d2e2f60a18e3112a5f61565507e8fb01682c21016b73250e18",
+      "bytes": 1426621,
+      "category": "roads",
+      "roles": [
+        "fort-worth.roads.osm_access_nodes.parquet"
+      ],
+      "city": "fort-worth"
+    },
+    {
+      "target_path": "roads/fort-worth/osm_ways.parquet",
+      "sha256": "668d9bad1dcb6375a734b606ec4585bf7a8a9be07f0f9cfb84ba65cdab489b26",
+      "bytes": 72734106,
+      "category": "roads",
+      "roles": [
+        "fort-worth.roads.osm_ways.parquet"
+      ],
+      "city": "fort-worth"
+    },
+    {
+      "target_path": "roads/houston/extraction.json",
+      "sha256": "7eddbe9b96e6ee7e7a1c8702824bde18f39ce827785ff9caa62b2eef04391255",
+      "bytes": 1209,
+      "category": "roads",
+      "roles": [
+        "houston.road_extraction"
+      ],
+      "city": "houston"
+    },
+    {
+      "target_path": "roads/houston/osm_access_nodes.parquet",
+      "sha256": "02debcd1de524cbb2c8976d49cb66eb608ca1baa36581be53a5b2d2e01482f44",
+      "bytes": 2177446,
+      "category": "roads",
+      "roles": [
+        "houston.roads.osm_access_nodes.parquet"
+      ],
+      "city": "houston"
+    },
+    {
+      "target_path": "roads/houston/osm_ways.parquet",
+      "sha256": "7fd8c2cdc806e3b6dfcdbf22531a68bed27ce5c6bbbae90c4006c6874c81d2b6",
+      "bytes": 111551600,
+      "category": "roads",
+      "roles": [
+        "houston.roads.osm_ways.parquet"
+      ],
+      "city": "houston"
+    },
+    {
+      "target_path": "roads/jacksonville/extraction.json",
+      "sha256": "b227dd6e59a3afa654d8c2e92300ee1feb17dc55fad21bc6bac44d6c7f83d2d4",
+      "bytes": 1219,
+      "category": "roads",
+      "roles": [
+        "jacksonville.road_extraction"
+      ],
+      "city": "jacksonville"
+    },
+    {
+      "target_path": "roads/jacksonville/osm_access_nodes.parquet",
+      "sha256": "3bda6b49f93e5477dc0bd3e3e243987ed87967f34912023afea497ed7e480af4",
+      "bytes": 897674,
+      "category": "roads",
+      "roles": [
+        "jacksonville.roads.osm_access_nodes.parquet"
+      ],
+      "city": "jacksonville"
+    },
+    {
+      "target_path": "roads/jacksonville/osm_ways.parquet",
+      "sha256": "dc47bd2797c3cb9319d8e13c2cbe0cf252b5b077812cfe86dbd0362e86df12b1",
+      "bytes": 36361428,
+      "category": "roads",
+      "roles": [
+        "jacksonville.roads.osm_ways.parquet"
+      ],
+      "city": "jacksonville"
+    },
+    {
+      "target_path": "roads/los-angeles/extraction.json",
+      "sha256": "db518b3f104398cc176fcc03a06ad8aaa7c23d68dd519d43bc8f4596d6d71610",
+      "bytes": 1225,
+      "category": "roads",
+      "roles": [
+        "los-angeles.road_extraction"
+      ],
+      "city": "los-angeles"
+    },
+    {
+      "target_path": "roads/los-angeles/osm_access_nodes.parquet",
+      "sha256": "7c64ada119e5d070d6a5ecb17568f141023b735e1dbcca329e0db0cf8adf2df3",
+      "bytes": 4274831,
+      "category": "roads",
+      "roles": [
+        "los-angeles.roads.osm_access_nodes.parquet"
+      ],
+      "city": "los-angeles"
+    },
+    {
+      "target_path": "roads/los-angeles/osm_ways.parquet",
+      "sha256": "f16986e998f1053c0a44a70a7736edf48fa0adecb1574f37dbb58bc23d30873e",
+      "bytes": 105757171,
+      "category": "roads",
+      "roles": [
+        "los-angeles.roads.osm_ways.parquet"
+      ],
+      "city": "los-angeles"
+    },
+    {
+      "target_path": "roads/new-york/extraction.json",
+      "sha256": "2a593b858cf32706df5235d673dae988af5875f4e9db9ed38f91f749f46c4d07",
+      "bytes": 1212,
+      "category": "roads",
+      "roles": [
+        "new-york.road_extraction"
+      ],
+      "city": "new-york"
+    },
+    {
+      "target_path": "roads/new-york/osm_access_nodes.parquet",
+      "sha256": "40cd68b666880b3dfc02da423099d421ecda97f3a2e45ed1d8518aa4796475b7",
+      "bytes": 4340085,
+      "category": "roads",
+      "roles": [
+        "new-york.roads.osm_access_nodes.parquet"
+      ],
+      "city": "new-york"
+    },
+    {
+      "target_path": "roads/new-york/osm_ways.parquet",
+      "sha256": "c548cb599a33f0ca210fb9a4907185e6aa55f235f6ec890264f097a6dbbb81da",
+      "bytes": 77456117,
+      "category": "roads",
+      "roles": [
+        "new-york.roads.osm_ways.parquet"
+      ],
+      "city": "new-york"
+    },
+    {
+      "target_path": "roads/philadelphia/extraction.json",
+      "sha256": "c4cdfb5eb19a5a1b54f08af80b4b5ecab6dc06e826a1f405c77a8d4569849755",
+      "bytes": 1227,
+      "category": "roads",
+      "roles": [
+        "philadelphia.road_extraction"
+      ],
+      "city": "philadelphia"
+    },
+    {
+      "target_path": "roads/philadelphia/osm_access_nodes.parquet",
+      "sha256": "cb46b84531a32b961f696d16e464cedc6f990171bcd36dd29bea1a5faf2fd4a9",
+      "bytes": 807847,
+      "category": "roads",
+      "roles": [
+        "philadelphia.roads.osm_access_nodes.parquet"
+      ],
+      "city": "philadelphia"
+    },
+    {
+      "target_path": "roads/philadelphia/osm_ways.parquet",
+      "sha256": "ebbf902045570b2897da5ae968ab91fe623166242d12e2a316321638e64a1cea",
+      "bytes": 49298252,
+      "category": "roads",
+      "roles": [
+        "philadelphia.roads.osm_ways.parquet"
+      ],
+      "city": "philadelphia"
+    },
+    {
+      "target_path": "roads/phoenix/extraction.json",
+      "sha256": "04564a700c99815bc1f80bf66a7ce8570cd52e2a141e43ab4f692d5c6ceafd79",
+      "bytes": 1216,
+      "category": "roads",
+      "roles": [
+        "phoenix.road_extraction"
+      ],
+      "city": "phoenix"
+    },
+    {
+      "target_path": "roads/phoenix/osm_access_nodes.parquet",
+      "sha256": "f3aadb4f23ed589febf4cf982e495d58458daed503b3ab3a01e1f6f0aeebc7cb",
+      "bytes": 6161093,
+      "category": "roads",
+      "roles": [
+        "phoenix.roads.osm_access_nodes.parquet"
+      ],
+      "city": "phoenix"
+    },
+    {
+      "target_path": "roads/phoenix/osm_ways.parquet",
+      "sha256": "22cd9ac6bc49048a8b1e5f237aade4ec28d2888ab0b80446a106301cab58a94e",
+      "bytes": 96195347,
+      "category": "roads",
+      "roles": [
+        "phoenix.roads.osm_ways.parquet"
+      ],
+      "city": "phoenix"
+    },
+    {
+      "target_path": "roads/san-antonio/extraction.json",
+      "sha256": "6448681eb484a9fe2449f8a5b5868dc614850cdd63627a729f106e14cc0fb7ea",
+      "bytes": 1213,
+      "category": "roads",
+      "roles": [
+        "san-antonio.road_extraction"
+      ],
+      "city": "san-antonio"
+    },
+    {
+      "target_path": "roads/san-antonio/osm_access_nodes.parquet",
+      "sha256": "37e053c0c804b9ce1a868cf19d0cf943a423723d14e6515bcc14a978f67594f3",
+      "bytes": 902282,
+      "category": "roads",
+      "roles": [
+        "san-antonio.roads.osm_access_nodes.parquet"
+      ],
+      "city": "san-antonio"
+    },
+    {
+      "target_path": "roads/san-antonio/osm_ways.parquet",
+      "sha256": "9cfe307f569408a294fba29607cc8fa045caa37dbf694fa0182bac71d6d97cb8",
+      "bytes": 48692519,
+      "category": "roads",
+      "roles": [
+        "san-antonio.roads.osm_ways.parquet"
+      ],
+      "city": "san-antonio"
+    },
+    {
+      "target_path": "roads/san-diego/extraction.json",
+      "sha256": "63bf07f6dd12c791add7ec941a4920ae09504a2925838cb438fd4c33d8b1ddba",
+      "bytes": 1222,
+      "category": "roads",
+      "roles": [
+        "san-diego.road_extraction"
+      ],
+      "city": "san-diego"
+    },
+    {
+      "target_path": "roads/san-diego/osm_access_nodes.parquet",
+      "sha256": "9cdcc78b606183c72277734acaeffd455eb4aa5ccdbf93f7248f3f285ef38519",
+      "bytes": 991022,
+      "category": "roads",
+      "roles": [
+        "san-diego.roads.osm_access_nodes.parquet"
+      ],
+      "city": "san-diego"
+    },
+    {
+      "target_path": "roads/san-diego/osm_ways.parquet",
+      "sha256": "92380ae0afc71487ed873ecfc04a498a4e5dff9b82bb9741d0fce700ad0e5cb4",
+      "bytes": 62721467,
+      "category": "roads",
+      "roles": [
+        "san-diego.roads.osm_ways.parquet"
+      ],
+      "city": "san-diego"
+    }
+  ],
+  "summary": {
+    "cities": 11,
+    "files": 116,
+    "bytes": 2807236223
+  },
+  "source_bytes_modified": false,
+  "source_files_copied": false,
+  "network_requests": 0
+}

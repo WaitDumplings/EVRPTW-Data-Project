@@ -9,6 +9,7 @@ from shapely.geometry import Point, box
 from evrptw_cle.charging_component import build_charging_component, build_charging_layers
 from evrptw_cle.delivery_access import build_delivery_access_context
 from evrptw_cle.local_road_access import build_access_context
+from evrptw_cle.public_locations import prepare_exclusion_masks
 from evrptw_cle.util import sha256_file
 from test_road_direction_barrier import _inputs
 
@@ -96,6 +97,26 @@ def test_charging_component_uses_shared_node_directed_terminal_and_native_identi
     assert not row.charger_release_eligible and not audit["instance_activation_included"]
     assert not access.core.has_edge("a", "d")
     assert {p["osmid"] for p in json.loads(row.terminal_inbound_path_json)} == {"2"}
+
+
+def test_component_retains_public_charging_inside_delivery_only_host(tmp_path):
+    context, _ = _road(tmp_path)
+    source = _station()
+    source["motorcar"], source["access:delivery"] = "yes", "no"
+    masks = prepare_exclusion_masks(
+        gpd.GeoDataFrame(
+            {"motorcar": ["yes"], "access:delivery": ["no"]},
+            geometry=[box(-20, 100, 30, 200)], crs=3857,
+        ),
+        "EPSG:3857",
+    )
+    locations, _, _, audit, _ = build_charging_layers(
+        source, _units(source), context, masks=masks,
+        boundary=gpd.GeoDataFrame(geometry=[box(-500, -500, 500, 500)], crs=3857),
+        city_slug="synthetic", medians={"ac_level2": 6.5, "dc_fast": 240},
+    )
+    assert len(locations) == 1 and locations.charging_parameter_eligible.all()
+    assert audit["source_filter"]["removed_count"] == 0
 
 
 def test_public_station_cannot_borrow_invited_private_road_but_keeps_equipment(tmp_path):

@@ -2,12 +2,47 @@ import json
 
 import geopandas as gpd
 import pytest
-from shapely.geometry import Point
+from shapely.geometry import Point, box
 
 from evrptw_cle.charging_road_access import build_charging_access_context
 from evrptw_cle.delivery_access import build_delivery_access_context
 from evrptw_cle.local_road_access import build_access_context
+from evrptw_cle.public_locations import prepare_exclusion_masks
 from test_road_direction_barrier import _inputs
+
+
+@pytest.mark.parametrize("kind", ["delivery_only", "generic_motor", "sensitive", "legacy"])
+def test_charging_mask_scope_survives_physical_inventory_and_connector_checks(tmp_path, kind):
+    options = _inputs(tmp_path)
+    tags = {"motorcar": "yes", "access:delivery": "no"}
+    if kind == "generic_motor":
+        tags["motorcar"] = "no"
+    elif kind == "sensitive":
+        tags["military"] = "base"
+    raw = gpd.GeoDataFrame([tags], geometry=[box(-20, -10, 20, 210)], crs=3857)
+    masks = prepare_exclusion_masks(raw, "EPSG:3857")
+    if kind == "legacy":
+        masks = masks.drop(columns="exclusion_scope")
+    masks.to_parquet(options["mask_path"])
+    seed, seed_manifest = build_access_context(**options, output_dir=tmp_path / "seed")
+    terminal = seed.physical.loc[seed.physical.osmid.eq("2")].iloc[0]
+    assert not terminal.motor_access_allowed
+    assert terminal.delivery_only_interior_road == (kind == "delivery_only")
+    assert terminal.sensitive_interior_road == (kind != "delivery_only")
+    assert seed_manifest["physical_mask_fields"] == [
+        "sensitive_interior_road", "delivery_only_interior_road"
+    ]
+    delivery, _ = build_delivery_access_context(
+        **options, seed_dir=tmp_path / "seed", output_dir=tmp_path / "delivery"
+    )
+    locations = gpd.GeoDataFrame(
+        {"latent_service_location_id": ["charging-test"]}, geometry=[Point(10, 150)], crs=3857
+    )
+    assert not delivery.anchor(locations, masks=masks).local_access_confirmed.iloc[0]
+    charging = build_charging_access_context(delivery)
+    result = charging.anchor(locations, masks=masks).iloc[0]
+    assert bool(result.local_access_confirmed) == (kind == "delivery_only")
+    assert bool(result.charging_motor_access_allowed) == (kind == "delivery_only")
 
 
 @pytest.mark.parametrize("node_only", [False, True])

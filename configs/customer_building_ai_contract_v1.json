@@ -1,0 +1,92 @@
+{
+  "method_id": "matched_building_ai_units_v1",
+  "entity": "canonical Microsoft–OSM matched building",
+  "microsoft": {
+    "source_kind": "global",
+    "index_snapshot": "2026-08-13",
+    "legacy": false
+  },
+  "osm": {
+    "snapshot": "2026-10-25",
+    "use_complete_building_tags": true,
+    "standalone_additions": false
+  },
+  "nsi": {
+    "release": "2026",
+    "archive_date": "2026-10-26",
+    "ordinary_occupancies": [
+      "RES1",
+      "RES2",
+      "RES3"
+    ],
+    "raw_values_immutable": true
+  },
+  "geometry": {
+    "same_object_polygon_iou_min": 0.5,
+    "same_object_requires_unique_complete_overlap": true,
+    "osm_child_fraction_min": 0.5,
+    "source_bbox_iou_min": 0.25,
+    "source_target_symmetric_area_ratio_max": 4.0,
+    "axis_reference_quantile": 0.99,
+    "axis_r": 0.2853432473555575,
+    "axis_reference_records": 10136,
+    "axis_reference_weighting": "equal city, equal genuine source-footprint groups within city, equal fd records within group",
+    "positive_polygon_area_required": true,
+    "height_admission_gate": false,
+    "service_domain_membership": "canonical own polygon point_on_surface inside service boundary"
+  },
+  "purpose": {
+    "classes": [
+      "residential",
+      "nonresidential",
+      "mixed",
+      "unknown"
+    ],
+    "unknown_retained_in_denominator": true,
+    "mixed_separate": true,
+    "web_evidence_allowed": true
+  },
+  "units": {
+    "scope": [
+      "building",
+      "complex",
+      "unresolved"
+    ],
+    "methods": [
+      "nsi_retained",
+      "web_extracted",
+      "human_verified",
+      "human_corrected",
+      "model_imputed",
+      "unresolved"
+    ],
+    "profiles": {
+      "u1": "U=1",
+      "u_lt50": "1<=U<50",
+      "u_lt100": "1<=U<100",
+      "unrestricted": "positive building-level count"
+    },
+    "reference_cases": "independently checked building-scope cases; never recycle model-imputed cases as verified"
+  },
+  "coverage": {
+    "denominator": "in-service matched geometry-clear residential + unknown, independent of NSI matches",
+    "residential_numerator": "OSM or evidence-supported AI/human residential",
+    "customer_numerator": "residential with usable scoped units satisfying the selected profile",
+    "separate_model_imputed_counts": true
+  },
+  "stage2_included": false,
+  "ai_review": {
+    "required_providers": [
+      "claude",
+      "gpt"
+    ],
+    "same_frozen_payload_and_task_prompt": true,
+    "independent_sessions": true,
+    "other_judgment_visible": false,
+    "different_web_results_preserved": true,
+    "missing_judge": "pending_independent_review",
+    "disagreement": "human_review",
+    "unit_count_averaging": false,
+    "agreement_is_independent_verification": false
+  }
+}

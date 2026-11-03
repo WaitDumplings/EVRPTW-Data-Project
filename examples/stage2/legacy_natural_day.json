@@ -1,0 +1,101 @@
+{
+  "schema": "evrptw_demand_first_config_v1",
+  "input": {
+    "cle": "../../my-city/outputs/cle/cities/dallas",
+    "communities": "../../my-city/inputs/tiger2025_dallas_bg.parquet",
+    "donor_artifact": "../../my-city/inputs/amazon-joint-marks"
+  },
+  "world": {
+    "seed": 20261028,
+    "provider_id": "synthetic_provider_v1",
+    "depot_id": null,
+    "radius_km": 25,
+    "alpha": 1,
+    "rho": 0.23,
+    "kappa": 4,
+    "unknown_units_shape": 1,
+    "unknown_units_rate": 1,
+    "demand_model": "binomial_geometric",
+    "p_unit": 0.01,
+    "mean_parcels_per_active_unit": 1.4,
+    "community_rate_cv": 0
+  },
+  "workload": {
+    "schema": "stage2_calibrated_workload_v1",
+    "donor_pool": "GEN-TRAIN",
+    "minimum_donor_bundles": 100,
+    "minimum_donor_station_days": 10,
+    "service_a_s": 23.744823376563776,
+    "service_b_s": 34.20371682884864,
+    "service_alpha": 1.1446974978785998,
+    "service_support_max_count": 16,
+    "service_tail_gamma": 0.5,
+    "service_scale": 1.0,
+    "specified_location_tw_probability": 0.06442887967229739,
+    "cargo_capacity_cm3": 18500000.0,
+    "maximum_full_proposals": 64
+  },
+  "operations": {
+    "start_date": "2026-11-02",
+    "days": 1,
+    "operating_weekdays": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+    ],
+    "shift_start_s": 28800,
+    "shift_end_s": 86400,
+    "ready_window_s": [
+      0,
+      21600
+    ],
+    "promise_lead_days": 0,
+    "consolidation_mode": "daily",
+    "deferral_eligibility_probability": 0,
+    "availability_pattern": "recurring_local_clock",
+    "source_window_end": "service_start",
+    "missing_window_policy": "operating_horizon"
+  },
+  "views": {
+    "sizes": [
+      100,
+      500,
+      1000
+    ],
+    "sampler": "community_blocks",
+    "materialize_day_indices": [
+      0
+    ],
+    "natural_day_dense_matrix_limit": 0
+  },
+  "physical": {
+    "vehicle": {
+      "profile_id": "delivery700_reference_synthetic_energy_v1",
+      "cargo_capacity_cm3": 18500000,
+      "battery_capacity_kwh": 100,
+      "specific_energy_kwh_per_km": 0.38910505836575876,
+      "initial_soc": 1,
+      "reserve_soc": 0.1,
+      "fleet_size": null,
+      "dc_cap_kw": 100,
+      "ac_cap_kw": 11
+    },
+    "charging": {
+      "derating_factor": 0.9,
+      "supply_policy": "road_detour_budget",
+      "external_cs_budget": 20,
+      "charge_policy": "full",
+      "charge_curve": "linear",
+      "access_policy": "assume_admitted_source_conditions_satisfied",
+      "opening_hours_policy": "assume_available_during_shift",
+      "queue_policy": "unlimited_ports"
+    }
+  },
+  "output": {
+    "path": "../../my-city/outputs/stage2-dallas"
+  }
+}

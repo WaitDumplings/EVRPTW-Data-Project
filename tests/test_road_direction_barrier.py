@@ -181,6 +181,8 @@ def test_redundant_delivery_permission_preserves_public_baseline(baseline):
         {"barrier": "bollard"},
         {"locked": "yes"},
         {"access:delivery": "no"},
+        {"barrier": "gate", "motor_vehicle": "no"},
+        {"barrier": "gate", "access": "no"},
     ],
 )
 def test_interior_hard_restriction_splits_and_blocks_both_incident_segments(tmp_path, node_tags):

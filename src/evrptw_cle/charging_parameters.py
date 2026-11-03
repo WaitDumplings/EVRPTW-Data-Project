@@ -41,7 +41,7 @@ def _positive(value):
         return np.nan
 
 
-def select_reference_configurations(locations, members, units, medians):
+def select_reference_configurations(locations, members, units, medians, *, facility_categories=True):
     """Choose one eligible member/connector; never combine power or port counts.
 
     The location pool is preserved. Vehicle eligibility is a separate flag.
@@ -57,6 +57,11 @@ def select_reference_configurations(locations, members, units, medians):
     by_id = {int(key): part for key, part in units.groupby("ID", sort=False)}
     configs = []
     binding_conflicts = 0
+    if facility_categories:
+        exclusion_reason = excluded_location_reason
+    else:
+        from .current_access import native_location_reason
+        exclusion_reason = native_location_reason
     for _, member in eligible.iterrows():
         station = by_id.get(int(member.ID))
         compatible = []
@@ -86,7 +91,7 @@ def select_reference_configurations(locations, members, units, medians):
                 if (
                     site_address(unit_metadata) != site_address(member)
                     or restricted
-                    or excluded_location_reason(unit_metadata)
+                    or exclusion_reason(unit_metadata, purpose="charging")
                     or coordinate_conflict
                 ):
                     conflict = True
@@ -247,6 +252,7 @@ def select_reference_configurations(locations, members, units, medians):
     members["reference_vehicle_configuration_available"] = members.ID.isin(configurations.afdc_id)
     summary = {
         "policy": PARAMETER_POLICY,
+        "facility_category_filter": bool(facility_categories),
         "potential_locations": int(result.charger_candidate_eligible.sum()),
         "compatible_locations": int(result.charging_parameter_eligible.sum()),
         "incompatible_locations": int(
@@ -261,3 +267,32 @@ def select_reference_configurations(locations, members, units, medians):
         "unknown_vehicle_clearance": "retained as uncertainty; Class2 reference van is not excluded by LD alone",
     }
     return result, members, configurations, summary
+
+
+def national_port_weighted_power_medians(units):
+    """Current source-qualified national medians, before any city/road filter."""
+    selected = units.copy()
+    for field, value in {"Country": "US", "Fuel Type Code": "ELEC",
+                         "Access Code": "public", "Status Code": "E"}.items():
+        selected = selected.loc[selected[field].eq(value)]
+    if "Restricted Access" in selected:
+        selected = selected.loc[~selected["Restricted Access"].astype(str).str.lower().isin(["true", "t", "1"])]
+    medians, counts = {}, {}
+    for mode, power, ports, upper in [
+        ("ac_level2", "EV J1772 Power Output (kW)", "EV J1772 Connector Count", 19.2),
+        ("dc_fast", "EV CCS Power Output (kW)", "EV CCS Connector Count", float("inf")),
+    ]:
+        values = pd.to_numeric(selected[power], errors="coerce")
+        weights = pd.to_numeric(selected[ports], errors="coerce")
+        good = np.isfinite(values) & values.gt(0) & values.le(upper) & np.isfinite(weights) & weights.gt(0)
+        order = np.argsort(values[good].to_numpy(), kind="stable")
+        v, w = values[good].to_numpy()[order], weights[good].to_numpy()[order]
+        if not len(v):
+            raise ValueError("No national source-qualified reported power for " + mode)
+        cumulative = np.cumsum(w)
+        # Count-weighted median without expanding one row per port.
+        lower = np.searchsorted(cumulative, cumulative[-1] / 2, side="left")
+        upper_index = np.searchsorted(cumulative, cumulative[-1] / 2, side="right")
+        medians[mode] = float((v[lower] + v[min(upper_index, len(v) - 1)]) / 2)
+        counts[mode] = dict(source_rows=int(good.sum()), ports=float(w.sum()))
+    return medians, counts

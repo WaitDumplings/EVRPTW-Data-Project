@@ -1,0 +1,19 @@
+{
+  "tests": 83,
+  "failures": 0,
+  "errors": 0,
+  "skipped": 0,
+  "scope": "local Stage1 directed tests, current source/scale lineage and integration fixtures",
+  "passed": true,
+  "server_full_cohort_generated": false,
+  "linux_validation": "pending",
+  "shell_syntax": "run_stage1.sh passed bash -n",
+  "building_attribute_reference": {
+    "candidate_buildings": 4012462,
+    "admitted_buildings": 3922741,
+    "coverage_pct": 97.7639414404423,
+    "unassessed_multiunit_admitted": 0,
+    "above_capacity_multiunit_admitted": 0
+  },
+  "dallas_package_integration": "same reference identities and admitted count as offline pipeline; 222333 admitted / 223667 candidates"
+}

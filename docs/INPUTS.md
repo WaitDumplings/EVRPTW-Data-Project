@@ -1,131 +1,83 @@
-# Local input bundle
+# Stage 1 inputs
 
-The generator consumes versioned local inputs. This repository contains the
-implementation, policies and compact speed statistics; geographic data bundles
-are not distributed in this version. It does not fetch rolling “latest” data.
+Initialize a project with `evrptw-cle stage1 init <directory>`, edit `stage1.json`, then run `evrptw-cle stage1 plan <config>`. Relative paths resolve against the configuration file. The [run guide](stage1/SERVER_IMPLEMENTATION.zh-CN.md) gives a complete example.
 
 ## Project configuration
 
-Create a project with `evrptw-data init my-city`. Only edit project.json to select
-the bundle, output directory and cities. All paths in that file are relative to
-its own directory; absolute paths and `~` are also supported.
+| Field | Content |
+|---|---|
+| `schema` | `evrptw_building_first_stage1_v1` |
+| `output` | New run directory |
+| `cities.<city>.microsoft` | Microsoft Global footprint table |
+| `cities.<city>.osm` | Complete OSM building table, including unknown/nonresidential competitors |
+| `cities.<city>.nsi` | Original NSI point GeoParquet with native attributes |
+| `cities.<city>.area_crs` | City metric CRS for geometry and neighbor distances |
+| `cities.<city>.service_boundary` | WGS84 land service surface |
+| `cities.<city>.admin_boundary` | WGS84 administrative polygon |
+| `components.inventory` | Road/facility source-inventory JSON |
+| `components.source_root` | Root for inventory paths |
+| `components.road_sources` | Per-city complete OSM extraction directories |
+| `source_snapshots` | Source index, snapshot and acquisition metadata |
+| `units` | Reference split, RMS fitting, support calibration and scale-screen parameters |
+| `customer.active_profile` | `unrestricted` for the current positive-unit population |
+| `customer.include_model_imputed` | Include separately labeled neighbor estimates |
 
-| Field | Purpose |
-| --- | --- |
-| sources.inventory | Source inventory JSON supplied with the local bundle |
-| sources.root | Root against which inventory file paths are resolved |
-| sources.roads | Complete OSM road extractions, one folder per city |
-| sources.customers | Optional prepared customer registry; null prepares it from raw inputs |
-| sources.osm_cohort | Optional PBF cohort description, used when road extractions are missing |
-| output | A fresh output directory, outside the read-only input directories |
-| cities | City slugs to build; null builds every city in the inventory |
+## Source tables
 
-Run `evrptw-data plan project.json` to see missing files before building. Plan
-checks structure and file presence; construction checks source hashes and
-compatibility. It cannot turn an arbitrary folder of provider downloads into a
-complete input bundle.
+| Input | Required identity and evidence |
+|---|---|
+| Microsoft Global | WGS84 Polygon/MultiPolygon GeoParquet; stable `building_id`, `source_kind=global`, index/source metadata, original geometry and available independent height |
+| OSM buildings | Namespaced native `osm_id`, complete polygon, building/building:use and functional tags, all raw tags, independent height/levels, native version/time |
+| NSI | WGS84 points; `fd_id`, `occtype`, `resunits`, available `bid`, `ftprntsrc`, `ftprntid`, `ftprntsqft`, `bldheight`, native coordinates and archived request provenance |
+| Boundaries | TIGER administrative polygon and modeled land service polygon |
+| OSM logistics | Native point/area identity, full geometry/tags, source provenance and explicit park identity/membership when available |
+| AFDC stations | IDs, original coordinates and precision, address, public/status/access evidence and archived response metadata |
+| AFDC equipment | Native station/member binding, device row, connectors, ports and mode power |
+| Census address auxiliary | Archived responses bound to exact AFDC input addresses |
+| OSM roads | Complete selected way geometry and node sequence, raw tags, restriction/barrier nodes and extraction provenance |
 
-## Bundle layout
+Native NSI zero-unit records are retained as source evidence for unknown-use exclusions and zero/positive conflicts. The positive residential matching pool is formed separately from ordinary RES1/RES2/RES3 records with valid positive units. A precomputed MS–NSI crosswalk is not required.
+
+Longitude/latitude and full source polygons are retained. Areas, matching residuals, spatial blocks and neighbor distances use `area_crs`. An NSI BID-derived bounding box is source evidence; it is not the original building polygon. NSI modeled heights/storeys are not used as independent height features for estimating that record's units.
+
+## Fixed source vintages
+
+| Source | Version/acquisition | Meaning |
+|---|---|---|
+| Census Places / Area Hydrography | TIGER/Line 2025 | City and water boundaries |
+| Microsoft GlobalMLBuildingFootprints | 2026-08-13 index snapshot | Index date; imagery dates remain source-specific |
+| OSM regional PBF | 2026-10-25T21:21:21Z | Common replication snapshot for roads/buildings/facilities |
+| NSI 2026 | Archived 2026-10-26 | Mixed upstream/model vintages; not a 2026 building census |
+| AFDC station | 2026-10-26T23:28:25.956900Z | US public operating electric station inventory |
+| AFDC equipment | 2026-10-27T00:03:57.499877Z | Separate equipment response; local Los Angeles date 10/26 |
+| Census address auxiliary | 2026-10-26T23:47:41.254276Z | Public_AR_Current address responses |
+| EPA 2023 NEI MOVES | 2023 activity/model inputs | Source-type-32 speeds; StreetLight observations 2022-01–2023-05 and EPA fills |
+| EPA 2022v2 commercial temporal | Effective observations 2022-11–2023-05 | Hour/day VMT weights |
+| NEI monthly VMT | Activity year 2023 | Annual representative weekday/weekend aggregation |
+
+Keep observation, model, release and acquisition dates separately, together with file hashes, URLs and query parameters. An index date does not replace a missing imagery date.
+
+## Road and facility bundle
 
 ```text
 inputs/
   inventory.json
-  boundaries/dallas/{admin,service}.geojson
-  cities/dallas/                 # normalized source tables and provenance
-  nsi/dallas/                    # native responses, requests, retrieval records
-  afdc/                          # station, unit and Census auxiliary snapshots
-  roads/dallas/
+  boundaries/<city>/{admin,service}.geojson
+  customer/<city>/{microsoft_footprints,osm_buildings,nsi}.parquet
+  roads/<city>/
     osm_ways.parquet
     osm_access_nodes.parquet
     extraction.json
+  afdc/
+  pbf/
 ```
 
-The bundle inventory uses schema `evrptw_frozen_source_archive_v1`. It contains:
+The source inventory uses `evrptw_frozen_source_archive_v1`: stable file keys map to paths/hashes; city entries hold `area_crs`, state, boundaries, depot evidence, geometry and source provenance; charging entries bind station/equipment/address responses. Raw tags include directional speed, one-way, motorcar/motor_vehicle/vehicle/access, delivery, locked and barrier values.
 
-- files: a map from stable source keys to relative path, sha256 and optional
-  private_build_input. archive_path is optional for ordinary local bundles;
-  historical archive imports may supply it separately.
-- cities: each city's area_crs, state_fips, label, boundaries, sources, depot,
-  geometry, nsi_tiles and provenance mappings.
-- charging: keys for station, units, census and their corresponding
-  station_provenance / units_provenance / census_provenance files.
-- source_vintages: provider, release, observation and acquisition information.
+The selected road envelope may cross a regional PBF boundary. Prepare the union from the same snapshot, deduplicate native OSM objects, then extract complete ways and referenced nodes. Preserve parent PBF and derived extraction hashes.
 
-For each city, boundaries maps admin_boundary and service_boundary to source
-keys. sources maps osm_buildings, osm_complexes and public_masks to source keys.
-depot contains raw, extraction and pbf_sha256. These provenance records must bind
-the same OSM snapshot as the roads. Source keys refer to entries in files.
+## Reuse and migration
 
-Raw customer preparation additionally needs geometry.global and geometry.legacy
-lists of Microsoft table keys, and nsi_tiles entries containing tile_id,
-response, source, request and request_sha256. The NSI retrieval record must bind
-the original request and response. A historical nsi_crosswalk is optional and
-is never a prerequisite for constructing a new city.
+A configured `geometry_cache` is an explicit import of prepared geometry and source ownership. Its manifest records that mode and available original-source bindings. Raw rebuilding uses the three city input files directly. Keep raw and cached modes distinct in run provenance.
 
-## Source table contracts
-
-| Input | Format and required content |
-| --- | --- |
-| Administrative / service boundaries | GeoJSON with a valid CRS; service geometry is the modeled land service domain |
-| Microsoft global / legacy extracts | GeoParquet, valid polygon geometry and stable building IDs; see microsoft_composite.py |
-| Native NSI tiles | GeoJSON sequence responses with original fd_id, occtype, resunits and point coordinates; request/response provenance |
-| OSM buildings | GeoParquet with osm_id, geometry and original building tags |
-| OSM residential complexes | GeoParquet with osm_id, geometry, membership / residential tags |
-| Exclusion masks | GeoParquet with geometry and exclusion_category; retain privately |
-| Depot candidates | GeoParquet with source_osm_id, geometry and original OSM tags |
-| AFDC stations / equipment | Original CSV snapshots, stable station/unit IDs and retrieval provenance |
-| Census auxiliary matches | The existing address-match snapshot, bound to the AFDC input addresses |
-| Road ways / access nodes | Complete source ways and referenced restriction/barrier nodes, with extraction.json and file hashes |
-
-The exact field handling is implemented in microsoft_composite.py,
-nsi_evidence.py, residential_sites.py, depot_candidates.py and
-charging_component.py. Preserve native attributes; do not manufacture a
-different source version by editing checksums in a previous run.
-
-## Prepared customer registry
-
-Set sources.customers to a prepared registry to reuse Microsoft composition and
-NSI matching. The registry contains policy `identified_residential_site_v3`,
-source_vintages, and a cities map. Each city provides area_crs,
-boundary_sha256, sources and provenance. Required source names are
-microsoft_footprints, nsi_crosswalk, osm_buildings, osm_complexes and public_masks;
-each record contains path and sha256.
-
-Paths in prepared registries follow the existing registry convention: absolute,
-or relative to the registry's grandparent directory. The project runner resolves
-them to absolute paths in its private working registry. Keep original matching
-and retrieval provenance with the prepared tables so independent validation can
-check native evidence.
-
-## Optional road extraction
-
-Install the osm extra with `pip install -e '.[osm]'`. An OSM cohort JSON contains
-a regions map. Each entry specifies path (PBF), metadata (JSON containing its
-sha256), frozen_url and cities. PBF and metadata paths are relative to the cohort
-JSON file. For example:
-
-```json
-{
-  "regions": {
-    "texas": {
-      "path": "texas-261025.osm.pbf",
-      "metadata": "texas.json",
-      "frozen_url": "https://download.geofabrik.de/north-america/us/texas-261025.osm.pbf",
-      "cities": ["dallas", "fort-worth"]
-    }
-  }
-}
-```
-
-Version 0.2 targets the reviewed OSM replication timestamp
-`2026-10-25T21:21:21Z` and the corresponding AFDC snapshots. Provider releases,
-image years and acquisition dates are different fields. Updating the input
-versions requires a compatible versioned policy, rather than a silent download.
-
-## Resuming
-
-Repeat the same build command after interruption. Completed components are
-reused only when their input, construction-code and output hashes match.
-Changed or incomplete component files fail explicitly. Keep the failed run for
-diagnosis and choose a new output directory when inputs or implementation have
-changed. The runner does not overwrite a frozen run.
+When moving to a server, update local paths in the project and nested inventory; copying a top-level JSON does not rewrite embedded paths. Use a new output directory for changed inputs or construction parameters. The package supplies code and profiles; the source bundle is supplied locally.

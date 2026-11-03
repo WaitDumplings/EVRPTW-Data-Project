@@ -1,149 +1,59 @@
 # EVRPTW Data Project
 
-Build **Stage 1 City Logistics Environments (CLEs)** from a shared national
-source combination and consistent rules across US cities.
+Build a City Logistics Environment (CLE) from five linked layers: **roads, reference speeds, residential buildings with units, depots, and charging locations**.
 
-[中文说明](README.zh-CN.md) · [Input bundle](docs/INPUTS.md) · [Methods](docs/METHODS.md) · [CLE output](docs/CLE_SCHEMA.md)
+[中文](README.zh-CN.md) · [Methods](docs/METHODS.md) · [Full Stage 1 specification](docs/STAGE1_SPEC.zh-CN.md) · [Run guide](docs/stage1/SERVER_IMPLEMENTATION.zh-CN.md) · [Current building statistics](docs/stage1/STATISTICS.zh-CN.md)
 
-A CLE contains the city road network, potential residential delivery locations,
-spatial depot groups, charging locations/configurations, and reference travel
-costs on the same native directed roads. A customer is a **location**, not an
-order: one house or one source-identified apartment complex. Residential units
-are nullable auxiliary information.
+Stage 1 uses Microsoft Global building footprints, OSM building and access evidence, NSI residential records, AFDC equipment, and state EPA speed profiles. Customer units come from one selected NSI record or a calibrated nearest-neighbor estimate. Each value keeps its source and method. The pipeline runs locally or on a server from the same configuration.
 
-**This repository ships implementation and policies, not city source data or
-prebuilt CLE archives.** Full data distribution and Stage 2 instance activation
-are deferred. The following workflow requires a local versioned source bundle.
+For the frozen 11-city server build, use the [Stage 1 server-agent handoff](docs/stage1/SERVER_AGENT_HANDOFF.zh-CN.md). It keeps one joint units calibration for the full cohort and records full-CLE results separately from the local building-attribute baseline.
 
 ## Install
 
-Use Python 3.11+ on Linux or macOS; Windows users can use WSL. A separate virtual
-environment is recommended. Large cities run sequentially; 32 GB RAM and ample
-working disk space are recommended.
+Python 3.11+ on Linux or macOS:
 
 ```bash
-git clone https://github.com/WaitDumplings/EVRPTW-Data-Project.git
-cd EVRPTW-Data-Project
 python -m venv .venv
 source .venv/bin/activate
 python -m pip install -e .
 ```
 
-For extraction from a local OSM PBF, install the optional dependency:
+Use `python -m pip install -e '.[osm]'` to extract local OSM PBF files.
+
+## Build a city
 
 ```bash
-python -m pip install -e '.[osm]'
+evrptw-cle stage1 init my-city
+# Edit my-city/stage1.json with your local source paths.
+evrptw-cle stage1 plan my-city/stage1.json
+evrptw-cle stage1 run my-city/stage1.json --cities dallas
 ```
 
-## Start with one city
+`evrptw-data stage1` and `evrptw-stage1` expose the same commands. Relative paths resolve against `stage1.json`. Supply the source files described in [Inputs](docs/INPUTS.md); the repository contains the implementation and configuration.
+
+`run` prepares and scopes buildings, calibrates the units model, estimates missing units, finalizes customer attributes, and builds the five layers and CLE. To run only building attributes:
 
 ```bash
-evrptw-data init my-city
+evrptw-cle stage1 run my-city/stage1.json --cities dallas --customer-only
 ```
 
-Place your local source bundle in my-city/inputs/. The generated project.json
-selects Dallas by default:
+Each stage is also available separately through `prepare`, `scope`, `calibrate-units`, `estimate-units`, `finalize`, `components`, and `verify`. The [run guide](docs/stage1/SERVER_IMPLEMENTATION.zh-CN.md) explains inputs, configurable parameters and outputs.
 
-```json
-{
-  "schema": "evrptw_stage1_project_v1",
-  "sources": {
-    "inventory": "inputs/inventory.json",
-    "root": "inputs",
-    "roads": "inputs/roads",
-    "customers": null,
-    "osm_cohort": null
-  },
-  "output": "outputs/cle",
-  "cities": ["dallas"]
-}
-```
+## What the CLE contains
 
-Paths are relative to project.json, regardless of your current working directory.
-A null customer registry prepares Microsoft/NSI sources from the bundle; a
-provided registry reuses prepared inputs. Existing complete road extractions
-are reused; sources.osm_cohort optionally enables extraction from local PBFs.
-See [input formats](docs/INPUTS.md) before preparing your own bundle.
+Roads retain native direction, vehicle restrictions and geometry. The road envelope extends 20 km beyond the city boundary; ordinary private roads are included under the delivery-routing assumption. State NEI/StreetLight statistics scale each edge's speed limit. Customers are canonical Microsoft–OSM buildings; explicit logistics parks form depot identities; AFDC supplies charging locations and equipment. All locations use the same road context.
 
-```bash
-# List missing inputs before starting expensive computation.
-evrptw-data plan my-city/project.json
+The current 11-city offline attribute run assigns usable residential units to **3,922,741 of 4,012,462 candidate buildings (97.7639%)**: 3,194,252 NSI representatives and 728,489 neighbor estimates. This measures building attribute coverage before road attachment. City totals, unresolved reasons and maximum unit counts are in [Statistics](docs/stage1/STATISTICS.zh-CN.md).
 
-# Build the complete CLE and perform one final data-validation pass.
-evrptw-data build my-city/project.json
-
-# View eligible location counts and saved certificate status.
-evrptw-data inspect my-city/outputs/cle
-```
-
-Without a source bundle, plan reports the missing inputs. It never substitutes
-a rolling latest download for a specified snapshot.
-
-## Multiple cities, resuming and logs
-
-Select several cities in project.json or override them for a run:
-
-```bash
-evrptw-data build my-city/project.json --cities dallas fort-worth
-```
-
-The reference cities are New York, Los Angeles, Chicago, Houston, Phoenix,
-Philadelphia, San Antonio, San Diego, Dallas, Jacksonville and Fort Worth.
-Selected cities must exist in your input bundle. State speed profiles currently
-cover AZ, CA, FL, IL, NY, PA and TX.
-
-Repeat the same command to resume. Completed components are reused only when
-inputs, construction code and output hashes agree. Interrupted partial folders
-are retained for diagnosis and that component is restarted. Choose a new output
-directory after changing inputs or implementation. Frozen runs are not overwritten.
-
-Progress is printed per city/component. Detailed logs are in output/logs/ and
-output/cities/<city>/. The normal pipeline is:
-
-```text
-Source preparation (if needed) -> Roads -> Locations and speeds -> CLE assembly -> Data validation
-```
-
-Normal builds do not run unit tests, historical comparisons or paper-audit jobs.
-Independent data validation can also be deferred and run separately:
-
-```bash
-evrptw-data build my-city/project.json --no-verify
-evrptw-data verify my-city/outputs/cle
-```
-
-The reader requires a certificate bound to the city manifest. An intermediate
-output built with --no-verify must be validated before using the reader.
-
-## Read a CLE in Python
+Each assembled city includes `roads/`, `speeds/`, `customers/`, `depots/`, `charging/`, `locations.parquet`, `location_access_costs.parquet`, and manifests. See [CLE schema](docs/CLE_SCHEMA.md).
 
 ```python
 from evrptw_cle.cle_reader import CityLogisticsEnvironment
 
-cle = CityLogisticsEnvironment("my-city/outputs/cle/cities/dallas")
+cle = CityLogisticsEnvironment("my-city/outputs/stage1-building-first/cities/dallas")
 locations = cle.locations()
-eligible = locations.loc[locations.candidate_eligible]
-public_roads = cle.graph("public")
-delivery_terminal = cle.graph("delivery_terminal")
-charging_terminal = cle.graph("charging_terminal")
-access_costs = cle.access_costs()
 ```
 
-The three graphs remain separate: private terminal access must not become public
-through-routing. Retained, eligible and pending locations are distinct counts.
-No orders, demands, TW, vehicle fleet or instance activation are generated here.
+## Stage 2 delivery instances
 
-## Repository layout
-
-```text
-src/evrptw_cle/   Construction, access, parameters, assembly and reading
-configs/          Shared policies and seven-state speed statistics
-scripts/          Internal stage workers used by the CLI
-examples/         Project configuration and reading example
-docs/             Input contracts, methods and CLE schema
-tests/            Development regression tests
-```
-
-For development, install `python -m pip install -e '.[dev,osm]'`, then run
-`pytest` and `ruff check src scripts tests`. See [NOTICE.md](NOTICE.md) for source
-attribution and distribution boundaries.
+Stage 2 reads a verified CLE to sample a depot and a fixed number of customer locations, generate delivery orders, select charging stations, and build directed road costs. Start with the [Dallas Cus100 review configuration](examples/stage2/server_review.json) and the [Stage 2 run guide](docs/stage2/REVIEW_PACKAGE.zh-CN.md). The [combined server handoff](docs/SERVER_HANDOFF.zh-CN.md) describes both stages and the evidence required for each. Historical data and entrypoints are documented in [Historical CLE](docs/HISTORICAL_CLE.md).
